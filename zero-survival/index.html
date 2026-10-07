@@ -122,11 +122,44 @@
     </div>
   </div>
 
-  <!-- 脚本：按依赖顺序加载 -->
-  <script src="js/config.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/ui.js"></script>
+  <!-- 脚本：按依赖顺序加载（core → components → data → systems → ui → world → game → main） -->
+  <!-- core -->
+  <script src="js/core/config.js"></script>
+  <script src="js/core/events.js"></script>
+  <script src="js/core/rng.js"></script>
+  <script src="js/core/input.js"></script>
+  <script src="js/core/audio.js"></script>
+  <script src="js/core/ecs.js"></script>
+  <!-- components -->
+  <script src="js/components/components.js"></script>
+  <!-- data -->
+  <script src="js/data/player.js"></script>
+  <script src="js/data/xp.js"></script>
+  <script src="js/data/scaling.js"></script>
+  <script src="js/data/monsters.js"></script>
+  <script src="js/data/bosses.js"></script>
+  <script src="js/data/skills.js"></script>
+  <!-- systems -->
+  <script src="js/systems/skills.js"></script>
+  <script src="js/systems/combat.js"></script>
+  <script src="js/systems/player.js"></script>
+  <script src="js/systems/shooting.js"></script>
+  <script src="js/systems/scaling.js"></script>
+  <script src="js/systems/spawn.js"></script>
+  <script src="js/systems/boss.js"></script>
+  <script src="js/systems/xp.js"></script>
+  <script src="js/systems/death.js"></script>
+  <script src="js/systems/effects.js"></script>
+  <script src="js/systems/render.js"></script>
+  <!-- ui -->
+  <script src="js/ui/ui-manager.js"></script>
+  <script src="js/ui/screen-start.js"></script>
+  <script src="js/ui/screen-tutorial.js"></script>
+  <script src="js/ui/screen-hud.js"></script>
+  <script src="js/ui/screen-levelup.js"></script>
+  <script src="js/ui/screen-death.js"></script>
+  <!-- world / game / main -->
+  <script src="js/world.js"></script>
   <script src="js/game.js"></script>
   <script src="js/main.js"></script>
 </body>
