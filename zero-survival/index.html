@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>零级求生：技能狂潮</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 游戏画布（战斗场景 + 菜单动态粒子背景） -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- 暗角装饰层（影院感） -->
+  <div class="vignette"></div>
+
+  <!-- HUD：屏幕常驻显示（进入战斗后显示） -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <div class="hud-left">
+        <div class="hud-level" id="hud-level">Lv.0</div>
+        <div class="hud-hp-bar"><div class="hud-hp-fill" id="hud-hp-fill"></div></div>
+        <div class="hud-hp-text" id="hud-hp-text">HP：100 / 100</div>
+      </div>
+      <div class="hud-right" id="hud-kills">击杀数：0</div>
+    </div>
+    <div class="hud-xp">
+      <div class="hud-xp-bar"><div class="hud-xp-fill" id="hud-xp-fill"></div></div>
+      <div class="hud-xp-text" id="hud-xp-text">经验：0 / 20</div>
+    </div>
+    <div class="hud-hint">拾取经验球，击败来袭怪物！</div>
+  </div>
+
+  <!-- 开始界面 -->
+  <div id="start-screen" class="overlay">
+    <div class="start-box">
+      <div class="game-emblem">⚔️</div>
+      <h1 class="game-title">零级求生<span class="title-accent">：技能狂潮</span></h1>
+      <p class="game-subtitle">开局0级 · 对抗无尽怪物 · 拾取经验构筑专属流派</p>
+      <div class="feature-chips">
+        <span class="chip">🧹 全屏割草</span>
+        <span class="chip">🔥 站场灼烧</span>
+        <span class="chip">🛡️ 生存苟命</span>
+      </div>
+      <button id="btn-start" class="btn btn-primary">开始游戏</button>
+    </div>
+  </div>
+
+  <!-- 新手开局弹窗 -->
+  <div id="tutorial-modal" class="overlay hidden">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-icon">📜</span>
+        <h2 class="modal-title">游戏说明</h2>
+      </div>
+      <div class="modal-body">
+        <p>你是一名<b>0级战士</b>，拥有基础远程子弹攻击。</p>
+        <p>怪物会从四周不断向你袭来！</p>
+        <ul class="rule-list">
+          <li>✦ 击杀怪物，拾取经验球升级</li>
+          <li>✦ 升级时三选一获取技能</li>
+          <li>✦ 重复选择已有技能，升级该技能，最高 Lv5</li>
+          <li>✦ 生命值归零，本局直接重置，重新开始</li>
+        </ul>
+        <p class="rule-title">操作提示</p>
+        <p>🕹️ WASD / 方向键 或 鼠标移动角色</p>
+        <p>🎯 自动瞄准最近敌人，持续发射子弹</p>
+      </div>
+      <button id="btn-confirm-start" class="btn btn-primary">确认，开始战斗</button>
+    </div>
+  </div>
+
+  <!-- 升级三选一弹窗（后续里程碑启用） -->
+  <div id="levelup-modal" class="overlay hidden">
+    <div class="modal">
+      <h2 class="modal-title">🎉 等级提升！请选择技能</h2>
+      <div id="skill-choices" class="skill-choices"></div>
+    </div>
+  </div>
+
+  <!-- 死亡结算界面（后续里程碑启用） -->
+  <div id="death-screen" class="overlay hidden">
+    <div class="modal">
+      <h1 class="death-title">本局结束</h1>
+      <p class="death-subtitle">你被怪物击倒了！</p>
+      <div id="death-stats" class="death-stats"></div>
+      <button id="btn-restart" class="btn btn-primary">重新开局</button>
+    </div>
+  </div>
+
+  <!-- 脚本：按依赖顺序加载 -->
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
