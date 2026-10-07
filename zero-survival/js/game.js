@@ -248,7 +248,10 @@ class Game {
         id: sk.id,
         icon: sk.icon,
         name: sk.name,
+        category: sk.category,
         level: next,
+        isNew: lv === 0,
+        maxLevel: sk.levels.length,
         desc: sk.levels[next - 1],
       };
     });
@@ -319,15 +322,18 @@ class Game {
   // 生成一个粒子：颜色取自暖金/冷蓝/紫调，缓慢上浮 + 左右摇曳
   _makeParticle() {
     const colors = ['#ffd54f', '#ff9800', '#4fc3f7', '#b39ddb', '#ff7043', '#ffeb3b'];
+    // 少量大颗粒"余烬"，多数为细腻小光点，增加层次
+    const big = Math.random() < 0.12;
     return {
       x: Math.random() * this.canvas.width,
       y: Math.random() * this.canvas.height,
-      r: 1 + Math.random() * 2.4,
-      speed: 10 + Math.random() * 26,
+      r: big ? 2.2 + Math.random() * 2.4 : 1 + Math.random() * 1.9,
+      speed: big ? 8 + Math.random() * 16 : 10 + Math.random() * 26,
       sway: 0.6 + Math.random() * 1.4,
       phase: Math.random() * Math.PI * 2,
       alpha: 0.10 + Math.random() * 0.35,
       color: colors[(Math.random() * colors.length) | 0],
+      glow: Math.random() < 0.5, // 半数粒子带辉光
     };
   }
 
@@ -350,13 +356,20 @@ class Game {
   _drawParticles(ctx, alphaMul = 1) {
     const ps = this.particles;
     if (!ps) return;
+    const t = this.elapsed;
     for (const p of ps) {
+      // 闪烁：透明度随时间脉动
+      const twinkle = 0.55 + 0.45 * Math.sin(p.phase * 3 + t * 2);
+      const alpha = p.alpha * alphaMul * twinkle;
+      if (alpha <= 0.015) continue;
+      if (p.glow) { ctx.shadowColor = p.color; ctx.shadowBlur = 8; }
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.alpha * alphaMul;
+      ctx.globalAlpha = alpha;
       ctx.fill();
     }
+    ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
   }
 
@@ -367,10 +380,20 @@ class Game {
     const w = this.canvas.width;
     const h = this.canvas.height;
 
-    ctx.fillStyle = CONFIG.canvas.bg;
-    ctx.fillRect(0, 0, w, h);
+    this._drawBackground(ctx, w, h);
     this._drawGrid(ctx, w, h);
     this._drawParticles(ctx, 1);
+  }
+
+  // 背景：中心略亮偏冷蓝 → 四周深蓝黑 的径向渐变，营造纵深与氛围
+  _drawBackground(ctx, w, h) {
+    const c = w / 2, cy = h / 2;
+    const grad = ctx.createRadialGradient(c, cy, 0, c, cy, Math.max(w, h) * 0.72);
+    grad.addColorStop(0, '#182033');
+    grad.addColorStop(0.55, '#121828');
+    grad.addColorStop(1, '#0a0e16');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
   }
 
   // 玩家移动：归一化向量 × 有效速度 × dt，并限制在画布内
@@ -980,9 +1003,8 @@ class Game {
     const w = this.canvas.width;
     const h = this.canvas.height;
 
-    // 背景
-    ctx.fillStyle = CONFIG.canvas.bg;
-    ctx.fillRect(0, 0, w, h);
+    // 背景（中心暖辉光 → 四周深色的径向渐变）
+    this._drawBackground(ctx, w, h);
 
     // 网格（增加战场纵深感）
     this._drawGrid(ctx, w, h);
@@ -1043,17 +1065,30 @@ class Game {
   _drawGrid(ctx, w, h) {
     const g = CONFIG.canvas.gridSize;
     const off = CONFIG.canvas.gridOffset;
+
+    // 网格线（低透明度，纵深层次）
     ctx.strokeStyle = CONFIG.canvas.gridColor;
     ctx.lineWidth = 1;
-
-    const x0 = off;
-    for (let x = x0; x < w; x += g) {
+    for (let x = off; x < w; x += g) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
     }
-    const y0 = off;
-    for (let y = y0; y < h; y += g) {
+    for (let y = off; y < h; y += g) {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
     }
+
+    // 辉光交点：每隔 2 格画一个金色光点，营造科技网格感
+    ctx.fillStyle = 'rgba(255, 170, 60, 0.15)';
+    ctx.shadowColor = 'rgba(255, 152, 0, 0.8)';
+    ctx.shadowBlur = 6;
+    const step = 2;
+    for (let x = off; x < w; x += g * step) {
+      for (let y = off; y < h; y += g * step) {
+        ctx.beginPath();
+        ctx.arc(x, y, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.shadowBlur = 0;
   }
 
   // 绘制玩家：蓝色战士圆球 + 朝向指示器 + 受击红闪

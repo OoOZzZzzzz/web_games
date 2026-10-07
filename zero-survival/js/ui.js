@@ -88,14 +88,25 @@ const UI = (() => {
     el.hudKills.textContent = '击杀数：' + count;
   }
 
-  // ---------- 升级三选一（后续里程碑实现逻辑，此处预留） ----------
+  // ---------- 升级三选一 ----------
   function showLevelUp(choices) {
     el.skillChoices.innerHTML = '';
     for (const c of choices) {
       const card = document.createElement('div');
       card.className = 'skill-card';
+      // 等级刻度点（到 Lv5）
+      let pips = '';
+      for (let i = 1; i <= c.maxLevel; i++) pips += `<span class="pip${i <= c.level ? ' on' : ''}"></span>`;
       card.innerHTML = `
-        <div class="skill-name">${c.icon} ${c.name} <span class="skill-cur">Lv.${c.level}</span></div>
+        <div class="skill-card-head">
+          <span class="skill-icon">${c.icon}</span>
+          <div class="skill-card-info">
+            <div class="skill-name">${c.name} ${c.isNew ? '<span class="skill-new">新</span>' : ''}
+              <span class="skill-cur">Lv.${c.level}</span></div>
+            <div class="skill-cat">${c.category}</div>
+          </div>
+          <div class="skill-pips">${pips}</div>
+        </div>
         <div class="skill-desc">${c.desc}</div>`;
       card.addEventListener('click', () => Game.onSkillChosen(c.id));
       el.skillChoices.appendChild(card);
@@ -112,7 +123,8 @@ const UI = (() => {
       const row = document.createElement('div');
       // 技能列表等多行文本需保留换行显示
       row.style.whiteSpace = 'pre-line';
-      row.textContent = `${label}：${value}`;
+      // 标签加粗高亮；值为静态文案，可安全用 innerHTML
+      row.innerHTML = `<b>${label}</b>　${value}`;
       el.deathStats.appendChild(row);
     }
     el.deathScreen.classList.remove('hidden');
