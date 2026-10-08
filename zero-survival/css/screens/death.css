@@ -1,0 +1,40 @@
+/* ============================================================
+   screens/death.css — 死亡结算界面
+   结算标题 / 副标题 / 统计面板（含技能列表）
+   ============================================================ */
+
+.death-title {
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: #ef5350;
+  text-shadow: 0 0 22px rgba(239, 83, 80, 0.55);
+  margin-bottom: 12px;
+}
+
+.death-subtitle {
+  font-size: 16px;
+  color: #9fb0c7;
+  margin-bottom: 22px;
+}
+
+.death-stats {
+  font-size: 14px;
+  color: #c6d2e2;
+  text-align: left;
+  margin-bottom: 26px;
+  padding: 6px 20px;
+  background: linear-gradient(165deg, rgba(30, 38, 56, 0.5), rgba(12, 18, 30, 0.62));
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.death-stats > div {
+  padding: 8px 2px;
+  line-height: 1.8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.death-stats > div:last-child { border-bottom: none; }
+
+.death-stats b { color: #ffd54f; letter-spacing: 1px; }

@@ -1,0 +1,133 @@
+/* ============================================================
+   screens/hud.css — 游戏运行 HUD（常驻显示）
+   等级徽章 / HP / 经验条（含光泽扫过）/ 击杀数 / 提示
+   ============================================================ */
+
+#hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  padding: 18px 24px;
+  font-size: 14px;
+}
+
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.hud-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(165deg, rgba(22, 30, 46, 0.62), rgba(10, 16, 26, 0.55));
+  border: 1px solid rgba(130, 165, 255, 0.22);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 22px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.hud-level {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 12px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #261204;
+  background: linear-gradient(135deg, #ffe082 0%, #ffb300 55%, #ff9800 100%);
+  border-radius: 999px;
+  box-shadow: 0 0 16px rgba(255, 152, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.hud-hp-bar,
+.hud-xp-bar {
+  width: 240px;
+  height: 11px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.hud-hp-fill {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #e53935, #ff7043 60%, #ffb3a5);
+  box-shadow: 0 0 14px rgba(239, 83, 80, 0.7);
+  transition: width 0.15s linear;
+}
+
+.hud-xp-fill {
+  position: relative;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #42a5f5, #7e57c2 60%, #b39ddb);
+  box-shadow: 0 0 14px rgba(66, 165, 245, 0.7);
+  transition: width 0.15s linear;
+}
+
+/* 血条/经验条光泽扫过 */
+.hud-hp-fill::after,
+.hud-xp-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.5) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: barShine 2.6s linear infinite;
+}
+
+@keyframes barShine {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.hud-hp-text,
+.hud-xp-text {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #aebfce;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.hud-right {
+  padding: 11px 18px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ff7043;
+  background: linear-gradient(165deg, rgba(30, 20, 22, 0.62), rgba(10, 16, 26, 0.55));
+  border: 1px solid rgba(255, 112, 67, 0.3);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 22px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  text-shadow: 0 0 10px rgba(255, 112, 67, 0.5);
+}
+
+.hud-xp {
+  position: absolute;
+  left: 24px;
+  bottom: 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hud-hint {
+  position: absolute;
+  bottom: 18px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #6f819b;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}

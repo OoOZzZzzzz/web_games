@@ -1,0 +1,115 @@
+/* ============================================================
+   ui-common.css — 通用 UI 组件
+   按钮(.btn) / 弹窗(.modal 及 .modal-head/.modal-body/.modal-title)
+   被所有界面复用。
+   ============================================================ */
+
+/* ---------- 按钮 ---------- */
+.btn {
+  position: relative;
+  display: inline-block;
+  padding: 15px 54px;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: #261204;
+  background: linear-gradient(135deg, #ffe082 0%, #ffb300 55%, #ff8f00 100%);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(255, 152, 0, 0.35), 0 0 0 2px rgba(255, 214, 102, 0.35);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
+  animation: btnPulse 2.6s ease-in-out infinite;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -130%;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  transform: skewX(-20deg);
+  animation: btnShine 3.4s ease-in-out infinite;
+}
+
+.btn:hover {
+  transform: translateY(-2px) scale(1.04);
+  filter: brightness(1.08);
+  box-shadow: 0 10px 34px rgba(255, 171, 64, 0.6), 0 0 0 2px rgba(255, 224, 130, 0.7);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+@keyframes btnPulse {
+  0%, 100% { box-shadow: 0 6px 24px rgba(255, 152, 0, 0.35), 0 0 0 2px rgba(255, 214, 102, 0.35); }
+  50% { box-shadow: 0 6px 34px rgba(255, 176, 48, 0.62), 0 0 0 3px rgba(255, 224, 130, 0.55); }
+}
+
+@keyframes btnShine {
+  0%, 55% { left: -130%; }
+  85%, 100% { left: 135%; }
+}
+
+/* ---------- 弹窗 ---------- */
+.modal {
+  width: min(540px, 90vw);
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 40px 40px 34px;
+  /* 顶部金色流光条 + 主体深色渐变（多重背景，避免与滚动冲突） */
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 179, 0, 0.75), rgba(255, 112, 67, 0.75), rgba(255, 179, 0, 0.75), transparent) top / 100% 3px no-repeat,
+    linear-gradient(165deg, #1a2233 0%, #101a2b 55%, #0b1320 100%);
+  border: 1px solid rgba(130, 165, 255, 0.28);
+  border-radius: 18px;
+  box-shadow: 0 0 60px rgba(28, 60, 160, 0.4), inset 0 0 40px rgba(20, 40, 100, 0.2);
+  text-align: center;
+  animation: modalIn 0.28s ease-out;
+}
+
+@keyframes modalIn {
+  from { transform: scale(0.9) translateY(14px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.modal-icon {
+  font-size: 30px;
+  animation: emblemFloat 3s ease-in-out infinite;
+}
+
+.modal-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #ffd54f;
+  text-shadow: 0 0 16px rgba(255, 213, 79, 0.45);
+}
+
+.modal-body {
+  font-size: 15px;
+  line-height: 2;
+  color: #c6d2e2;
+  text-align: left;
+  margin-bottom: 28px;
+}
+
+.modal-body p {
+  margin: 6px 0;
+}
+
+.modal-body b {
+  color: #ffd54f;
+}

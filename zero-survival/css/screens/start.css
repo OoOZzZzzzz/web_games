@@ -1,0 +1,236 @@
+/* ============================================================
+   screens/start.css — 开始界面（高级玻璃拟态）
+   卡片/流光描边/光斑/小标题/徽章/主标题/流派标签/按钮
+   ============================================================ */
+
+#start-screen {
+  background:
+    radial-gradient(1000px 540px at 50% -14%, rgba(120, 168, 255, 0.11), transparent 62%),
+    radial-gradient(880px 500px at 90% 114%, rgba(255, 124, 46, 0.13), transparent 62%),
+    radial-gradient(760px 440px at 6% 112%, rgba(255, 186, 64, 0.09), transparent 60%),
+    rgba(3, 7, 15, 0.30);
+}
+
+.start-box {
+  position: relative;
+  width: min(600px, 92vw);
+  text-align: center;
+  padding: 44px 60px 40px;
+  background: linear-gradient(168deg, rgba(22, 30, 48, 0.80), rgba(9, 15, 27, 0.68));
+  border-radius: 30px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 36px 96px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 0 70px rgba(90, 140, 255, 0.05);
+  overflow: hidden;
+  animation: boxIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes boxIn {
+  from { transform: translateY(26px) scale(0.96); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* 卡片顶部旋转流光描边（conic 渐变） */
+@property --border-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+.start-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(from var(--border-angle),
+    transparent 0%,
+    rgba(255, 208, 96, 0.95) 12%,
+    transparent 27%,
+    transparent 46%,
+    rgba(122, 190, 255, 0.75) 58%,
+    transparent 72%,
+    transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: borderSpin 9s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes borderSpin {
+  to { --border-angle: 360deg; }
+}
+
+/* 卡片顶部内侧高光线 */
+.start-box::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 12%; right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 226, 130, 0.55), transparent);
+}
+
+/* 氛围光斑（灵动漂浮） */
+.orb { position: absolute; border-radius: 50%; filter: blur(6px); pointer-events: none; }
+.orb-a {
+  width: 150px; height: 150px; left: -44px; top: -54px;
+  background: radial-gradient(circle, rgba(255, 176, 60, 0.34), transparent 70%);
+  animation: orbFloat 9s ease-in-out infinite;
+}
+.orb-b {
+  width: 122px; height: 122px; right: -34px; bottom: 18px;
+  background: radial-gradient(circle, rgba(96, 150, 255, 0.30), transparent 70%);
+  animation: orbFloat 11s ease-in-out infinite reverse;
+}
+.orb-c {
+  width: 84px; height: 84px; left: 22%; top: 60%;
+  background: radial-gradient(circle, rgba(255, 92, 124, 0.22), transparent 70%);
+  animation: orbFloat 7s ease-in-out infinite 0.8s;
+}
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(14px, -16px) scale(1.12); }
+  66% { transform: translate(-12px, 10px) scale(0.94); }
+}
+
+/* 顶部小标题分隔 */
+.start-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 26px;
+  animation: fadeUp 0.8s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.kicker-text { font-size: 11px; font-weight: 700; letter-spacing: 5px; color: rgba(190, 205, 230, 0.85); }
+.start-kicker .line {
+  width: 46px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 200, 100, 0.7));
+}
+.start-kicker .line:last-child { transform: scaleX(-1); }
+.diamond {
+  width: 5px; height: 5px; transform: rotate(45deg);
+  background: #ffd54f;
+  box-shadow: 0 0 8px rgba(255, 190, 80, 0.9);
+}
+
+/* 徽章：双旋转光环 + 浮动 */
+.game-emblem {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: emblemFloat 4.2s ease-in-out 0.15s infinite;
+}
+.emblem-icon {
+  position: relative;
+  z-index: 2;
+  width: 72px; height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #31405f, #141c30 72%);
+  border: 1.5px solid rgba(255, 214, 90, 0.6);
+  box-shadow: 0 0 26px rgba(255, 152, 0, 0.45), inset 0 0 18px rgba(0, 0, 0, 0.6);
+}
+.emblem-ring { position: absolute; inset: 0; border-radius: 50%; }
+.ring-1 {
+  border: 1px dashed rgba(255, 179, 0, 0.4);
+  animation: ringSpin 16s linear infinite;
+}
+.ring-2 {
+  inset: -11px;
+  border: 1px solid rgba(120, 165, 255, 0.22);
+  border-top-color: rgba(255, 210, 120, 0.75);
+  animation: ringSpin 9s linear infinite reverse;
+}
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+@keyframes emblemFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* 主标题：分两行，精细分层 */
+.game-title {
+  font-size: clamp(46px, 8vw, 74px);
+  font-weight: 900;
+  letter-spacing: 4px;
+  line-height: 1.12;
+  animation: fadeUp 0.8s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.t-line {
+  display: block;
+  background: linear-gradient(180deg, #fff8e0 0%, #ffd54f 40%, #ff9d2e 72%, #ff7a2e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: titleGlow 3.2s ease-in-out infinite;
+}
+.t-line.accent {
+  background: linear-gradient(180deg, #ffe9a8 0%, #ffb340 40%, #ff7a3d 75%, #ff5f3d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 12px;
+}
+@keyframes titleGlow {
+  0%, 100% { filter: drop-shadow(0 0 14px rgba(255, 160, 40, 0.35)); }
+  50% { filter: drop-shadow(0 0 30px rgba(255, 180, 60, 0.7)); }
+}
+
+.game-subtitle {
+  margin-top: 18px;
+  font-size: 15px;
+  letter-spacing: 4px;
+  color: rgba(182, 200, 224, 0.9);
+  animation: fadeUp 0.8s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 流派标签 */
+.feature-chips {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 30px 0 40px;
+  flex-wrap: wrap;
+  animation: fadeUp 0.8s 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: #dbe6f5;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(150, 185, 255, 0.22);
+  border-radius: 999px;
+  box-shadow: inset 0 0 14px rgba(90, 140, 255, 0.08);
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.chip-ico { font-size: 15px; }
+.chip:hover {
+  border-color: rgba(255, 213, 79, 0.6);
+  color: #ffd54f;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(255, 152, 0, 0.2);
+}
+
+/* 开始按钮 + 提示（入场缓动） */
+#start-screen .btn {
+  animation: fadeUp 0.7s 0.5s cubic-bezier(0.16, 1, 0.3, 1) both, btnPulse 2.6s ease-in-out infinite;
+}
+.start-hint {
+  margin-top: 18px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: rgba(150, 168, 195, 0.75);
+  animation: fadeUp 0.8s 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 通用入场缓动 */
+@keyframes fadeUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

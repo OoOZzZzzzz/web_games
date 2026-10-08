@@ -1,0 +1,21 @@
+/* ============================================================
+   screens/tutorial.css — 新手开局弹窗
+   说明规则列表。弹窗基础(.modal/.modal-body)来自 ui-common.css。
+   ============================================================ */
+
+.rule-list {
+  list-style: none;
+  padding: 10px 0 8px;
+}
+
+.rule-list li {
+  margin: 5px 0;
+  padding-left: 4px;
+}
+
+.rule-title {
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ffd54f;
+  margin-top: 14px !important;
+}
