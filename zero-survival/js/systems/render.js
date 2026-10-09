@@ -212,15 +212,17 @@
     }
 
     _drawBullets(ctx, world) {
+      const skin = window.ZS.Data.resolveBulletStyle('gold'); // 兜底
       for (const b of world.bullets) {
+        const sk = b.skin || skin;
+        // 辉光
+        if (sk.glow) { ctx.shadowColor = sk.glow; ctx.shadowBlur = 10; }
         ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
         ctx.fillStyle = b.color; ctx.fill();
-        // 辉光
-        ctx.beginPath(); ctx.arc(b.x, b.y, b.radius + 2, 0, Math.PI * 2);
-        ctx.strokeStyle = hexA(b.color, 0.5); ctx.lineWidth = 1; ctx.stroke();
-        // 拖尾
+        ctx.shadowBlur = 0;
+        // 拖尾（皮肤色）
         ctx.beginPath(); ctx.arc(b.x - b.vx * 0.014, b.y - b.vy * 0.014, b.radius * 0.5, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.fill();
+        ctx.fillStyle = sk.trail || 'rgba(255,255,255,0.65)'; ctx.fill();
       }
     }
 

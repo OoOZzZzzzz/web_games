@@ -66,44 +66,24 @@
       this.player = null;
     },
 
-    // ============ 实体工厂 ============
+    // ============ 实体工厂（OOP 实体类实例化） ============
 
-    // 玩家外观 = 基础外观 + 当前风格主题
-    _playerAppearance() {
-      const base = Data.player.appearance;
-      const theme = (this.style && this.style.theme && this.style.theme.player) || null;
-      if (!theme) return Object.assign({}, base);
-      return Object.assign({}, base, theme);   // 主题覆盖 color/stroke/highlight/gunColor/glow/core
+    // 本局风格主题
+    _styleTheme() {
+      return (this.style && this.style.theme) || null;
     },
 
     spawnPlayer() {
-      const d = Data.player;
-      const p = {
-        x: this.width / 2,
-        y: this.height / 2,
-        radius: d.radius,
-        hp: d.maxHp,
-        maxHp: d.maxHp,
-        // 基础属性（技能加成由系统动态计算）
-        baseMoveSpeed: d.moveSpeed,
-        baseFireRate: d.fireRate,
-        baseDamage: d.attackDamage,
-        moveSpeed: d.moveSpeed,
-        attackDamage: d.attackDamage,
-        fireRate: d.fireRate,
-        invulnTimer: 0,
-        hurtFlash: 0,
-        aim: { x: 1, y: 0 },
-        skills: this.skills,   // 引用世界技能表，系统共享读写
-        appearance: this._playerAppearance(),
-      };
+      const p = new window.ZS.Entities.Player(this._styleTheme());
+      p.x = this.width / 2;
+      p.y = this.height / 2;
+      p.skills = this.skills;   // 引用世界技能表，系统共享读写
       this.player = p;
       return p;
     },
 
     // 生成怪物：typeId 外观来自 data(继承解析)，scaled 为已按等级缩放后的数值
     spawnEnemy(typeId, scaled) {
-      const m = Data.resolveMonster(typeId);
       const p = this.player;
       const margin = Data.scaling.spawn.spawnMargin;
       let x = 0, y = 0;
@@ -115,43 +95,18 @@
         else { x = this.width + margin; y = Math.random() * this.height; }
         if (Math.hypot(x - p.x, y - p.y) >= Data.scaling.spawn.minSpawnDist) break;
       }
-      const e = {
-        type: typeId,
-        tier: m.tier,
-        shape: m.shape,
-        radius: m.radius,
-        appearance: this._enemyAppearance(m),
-        features: m.features || [],
-        abilities: m.abilities || [],
-        onDeath: m.onDeath || null,
-        x, y,
-        hp: scaled.hp,
-        maxHp: scaled.hp,
-        damage: scaled.damage,
-        speed: scaled.speed,
-        xp: m.stats.xp,
-        slowTimer: 0,
-        hitFlash: 0,
-      };
+      const e = window.ZS.Entities.Monster.fromData(typeId, this._styleTheme());
+      e.x = x; e.y = y;
+      e.hp = scaled.hp;
+      e.maxHp = scaled.hp;
+      e.damage = scaled.damage;
+      e.speed = scaled.speed;
       this.enemies.push(e);
       return e;
     },
 
-    // 怪物外观 = 基类外观 + 当前风格主题(enemy 色调)
-    _enemyAppearance(m) {
-      const a = m.appearance;
-      const theme = (this.style && this.style.theme && this.style.theme.enemy) || null;
-      if (!theme) return Object.assign({}, a);
-      const out = Object.assign({}, a);
-      out.stroke = theme.tint;       // 描边用主题色
-      if (theme.glow) out.glow = theme.glow;
-      if (theme.eye) out.eyeColor = theme.eye;
-      return out;
-    },
-
     // 生成 BOSS：bossId 外观来自 data.bosses(继承解析)，scaled 为缩放数值
     spawnBoss(bossId, scaled) {
-      const b = Data.resolveBoss(bossId);
       const margin = Data.scaling.spawn.spawnMargin;
       const side = (Math.random() * 4) | 0;
       let x = 0, y = 0;
@@ -159,51 +114,34 @@
       else if (side === 1) { x = Math.random() * this.width; y = this.height + margin; }
       else if (side === 2) { x = -margin; y = Math.random() * this.height; }
       else { x = this.width + margin; y = Math.random() * this.height; }
-      const e = {
-        type: 'boss', bossId,
-        tier: 'boss',
-        shape: b.shape,
-        radius: b.radius,
-        appearance: this._bossAppearance(b),
-        features: b.features || [],
-        abilities: b.abilities || [],
-        onDeath: b.onDeath || null,
-        skills: b.skills || [],
-        x, y,
-        hp: scaled.hp,
-        maxHp: scaled.hp,
-        damage: scaled.damage,
-        speed: b.stats.speed,
-        xp: b.stats.xp,
-        slowTimer: 0,
-        hitFlash: 0,
-      };
+      const e = window.ZS.Entities.Boss.fromData(bossId, this._styleTheme());
+      e.x = x; e.y = y;
+      e.hp = scaled.hp;
+      e.maxHp = scaled.hp;
+      e.damage = scaled.damage;
+      e.speed = scaled.speed;
       this.enemies.push(e);
       return e;
     },
 
-    // BOSS 外观 = 基类外观 + 当前风格主题(boss 色调)
-    _bossAppearance(b) {
-      const a = b.appearance;
-      const theme = (this.style && this.style.theme && this.style.theme.boss) || null;
-      if (!theme) return Object.assign({}, a);
-      return Object.assign({}, a, theme);   // 主题覆盖 color/stroke/glow
-    },
-
-    // 生成子弹
+    // 生成子弹（带子弹皮肤 style）
     spawnBullet(x, y, ang, opts = {}) {
       if (this.bullets.length >= CONFIG.attack.maxBullets) return;
       const speed = opts.speed || CONFIG.player.bulletSpeed;
+      // 玩家子弹皮肤（默认 gold，预留可选）
+      const skin = Data.resolveBulletStyle((this.player && this.player.bulletStyle) || 'gold');
+      const isCrit = !!opts.isCrit;
       this.bullets.push({
         x, y,
         vx: Math.cos(ang) * speed,
         vy: Math.sin(ang) * speed,
         damage: opts.damage || 0,
-        isCrit: !!opts.isCrit,
-        radius: CONFIG.attack.bulletRadius,
+        isCrit,
+        radius: skin.radius,
         life: CONFIG.attack.bulletLife,
         pierceLeft: opts.pierceLeft || 0,
-        color: opts.isCrit ? '#ff7043' : CONFIG.attack.bulletColor,
+        skin,
+        color: isCrit ? (skin.critColor || '#ff7043') : skin.color,
         hitIds: new Set(),
       });
     },
