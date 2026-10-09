@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/screens/tutorial.css">
   <link rel="stylesheet" href="css/screens/hud.css">
   <link rel="stylesheet" href="css/screens/levelup.css">
+  <link rel="stylesheet" href="css/screens/style.css">
   <link rel="stylesheet" href="css/screens/death.css">
 </head>
 <body>
@@ -87,6 +88,15 @@
     </div>
   </div>
 
+  <!-- 风格选择（每局随机三选一） -->
+  <div id="style-screen" class="overlay hidden">
+    <div class="modal">
+      <h2 class="modal-title">🎨 选择本局风格</h2>
+      <p class="style-subtitle">每局随机三选一 · 决定本局的视觉主题</p>
+      <div id="style-choices" class="style-choices"></div>
+    </div>
+  </div>
+
   <!-- 新手开局弹窗 -->
   <div id="tutorial-modal" class="overlay hidden">
     <div class="modal">
@@ -140,12 +150,14 @@
   <!-- components -->
   <script src="js/components/components.js"></script>
   <!-- data -->
+  <script src="js/data/monsterBase.js"></script>
   <script src="js/data/player.js"></script>
   <script src="js/data/xp.js"></script>
   <script src="js/data/scaling.js"></script>
   <script src="js/data/monsters.js"></script>
   <script src="js/data/bosses.js"></script>
   <script src="js/data/skills.js"></script>
+  <script src="js/data/styles.js"></script>
   <!-- systems -->
   <script src="js/systems/skills.js"></script>
   <script src="js/systems/combat.js"></script>
@@ -161,6 +173,7 @@
   <!-- ui -->
   <script src="js/ui/ui-manager.js"></script>
   <script src="js/ui/screen-start.js"></script>
+  <script src="js/ui/screen-style.js"></script>
   <script src="js/ui/screen-tutorial.js"></script>
   <script src="js/ui/screen-hud.js"></script>
   <script src="js/ui/screen-levelup.js"></script>

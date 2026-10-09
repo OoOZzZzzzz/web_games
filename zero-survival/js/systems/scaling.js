@@ -8,24 +8,24 @@
   const Data = window.ZS.Data;
 
   const Scaling = {
-    // 普通/精英怪物按玩家等级缩放
+    // 普通/精英怪物按玩家等级缩放（读取继承后的 stats）
     monster(world, typeId) {
-      const m = Data.monsters[typeId];
+      const m = Data.resolveMonster(typeId);
       const lv = world.level;
       const lv5 = Math.floor(lv / 5);
-      const hp = Math.round(m.hp * (1 + lv5 * Data.scaling.per5Lv.hp));
-      const dmg = Math.round(m.damage * (1 + lv5 * Data.scaling.per5Lv.dmg));
-      const speed = m.speed * (1 + lv * Data.scaling.speedPerLv);
+      const hp = Math.round(m.stats.hp * (1 + lv5 * Data.scaling.per5Lv.hp));
+      const dmg = Math.round(m.stats.damage * (1 + lv5 * Data.scaling.per5Lv.dmg));
+      const speed = m.stats.speed * (1 + lv * Data.scaling.speedPerLv);
       return { hp, damage: dmg, speed };
     },
     // BOSS 按玩家等级缩放
     boss(world, bossId) {
-      const b = Data.bosses[bossId];
+      const b = Data.resolveBoss(bossId);
       const lv = world.level;
       const lv5 = Math.floor(lv / 5);
-      const hp = Math.round(b.hp * (1 + lv5 * Data.scaling.per5Lv.hp));
-      const dmg = Math.round(b.damage * (1 + lv5 * Data.scaling.per5Lv.dmg));
-      return { hp, damage: dmg, speed: b.speed };
+      const hp = Math.round(b.stats.hp * (1 + lv5 * Data.scaling.per5Lv.hp));
+      const dmg = Math.round(b.stats.damage * (1 + lv5 * Data.scaling.per5Lv.dmg));
+      return { hp, damage: dmg, speed: b.stats.speed };
     },
   };
 

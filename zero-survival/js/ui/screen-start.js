@@ -12,7 +12,7 @@
       document.getElementById('btn-start').addEventListener('click', () => {
         ZS.Sfx.ensure();
         ZS.Sfx.select();
-        ZS.UI.manager.show('tutorial');
+        ZS.Game.startFlow(true);
       });
     },
     show() { if (this.el) this.el.classList.remove('hidden'); },

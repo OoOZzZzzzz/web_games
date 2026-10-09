@@ -20,6 +20,7 @@
 
     // ---- 一局状态 ----
     phase: 'menu',          // 'menu' | 'battle'
+    style: null,            // 本局视觉主题（风格）对象
     level: 0,
     xp: 0,
     kills: 0,
@@ -66,6 +67,15 @@
     },
 
     // ============ 实体工厂 ============
+
+    // 玩家外观 = 基础外观 + 当前风格主题
+    _playerAppearance() {
+      const base = Data.player.appearance;
+      const theme = (this.style && this.style.theme && this.style.theme.player) || null;
+      if (!theme) return Object.assign({}, base);
+      return Object.assign({}, base, theme);   // 主题覆盖 color/stroke/highlight/gunColor/glow/core
+    },
+
     spawnPlayer() {
       const d = Data.player;
       const p = {
@@ -85,14 +95,15 @@
         hurtFlash: 0,
         aim: { x: 1, y: 0 },
         skills: this.skills,   // 引用世界技能表，系统共享读写
+        appearance: this._playerAppearance(),
       };
       this.player = p;
       return p;
     },
 
-    // 生成怪物：typeId 外观来自 data，scaled 为已按等级缩放后的数值
+    // 生成怪物：typeId 外观来自 data(继承解析)，scaled 为已按等级缩放后的数值
     spawnEnemy(typeId, scaled) {
-      const m = Data.monsters[typeId];
+      const m = Data.resolveMonster(typeId);
       const p = this.player;
       const margin = Data.scaling.spawn.spawnMargin;
       let x = 0, y = 0;
@@ -108,14 +119,17 @@
         type: typeId,
         tier: m.tier,
         shape: m.shape,
-        color: m.color,
         radius: m.radius,
+        appearance: this._enemyAppearance(m),
+        features: m.features || [],
+        abilities: m.abilities || [],
+        onDeath: m.onDeath || null,
         x, y,
         hp: scaled.hp,
         maxHp: scaled.hp,
         damage: scaled.damage,
         speed: scaled.speed,
-        xp: m.xp,
+        xp: m.stats.xp,
         slowTimer: 0,
         hitFlash: 0,
       };
@@ -123,9 +137,21 @@
       return e;
     },
 
-    // 生成 BOSS：bossId 外观来自 data.bosses，scaled 为缩放数值
+    // 怪物外观 = 基类外观 + 当前风格主题(enemy 色调)
+    _enemyAppearance(m) {
+      const a = m.appearance;
+      const theme = (this.style && this.style.theme && this.style.theme.enemy) || null;
+      if (!theme) return Object.assign({}, a);
+      const out = Object.assign({}, a);
+      out.stroke = theme.tint;       // 描边用主题色
+      if (theme.glow) out.glow = theme.glow;
+      if (theme.eye) out.eyeColor = theme.eye;
+      return out;
+    },
+
+    // 生成 BOSS：bossId 外观来自 data.bosses(继承解析)，scaled 为缩放数值
     spawnBoss(bossId, scaled) {
-      const b = Data.bosses[bossId];
+      const b = Data.resolveBoss(bossId);
       const margin = Data.scaling.spawn.spawnMargin;
       const side = (Math.random() * 4) | 0;
       let x = 0, y = 0;
@@ -137,19 +163,31 @@
         type: 'boss', bossId,
         tier: 'boss',
         shape: b.shape,
-        color: b.color,
         radius: b.radius,
+        appearance: this._bossAppearance(b),
+        features: b.features || [],
+        abilities: b.abilities || [],
+        onDeath: b.onDeath || null,
+        skills: b.skills || [],
         x, y,
         hp: scaled.hp,
         maxHp: scaled.hp,
         damage: scaled.damage,
-        speed: b.speed,
-        xp: b.xp,
+        speed: b.stats.speed,
+        xp: b.stats.xp,
         slowTimer: 0,
         hitFlash: 0,
       };
       this.enemies.push(e);
       return e;
+    },
+
+    // BOSS 外观 = 基类外观 + 当前风格主题(boss 色调)
+    _bossAppearance(b) {
+      const a = b.appearance;
+      const theme = (this.style && this.style.theme && this.style.theme.boss) || null;
+      if (!theme) return Object.assign({}, a);
+      return Object.assign({}, a, theme);   // 主题覆盖 color/stroke/glow
     },
 
     // 生成子弹

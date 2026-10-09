@@ -1,7 +1,7 @@
 /**
- * systems/render.js — 渲染系统
- * 全部画布绘制：背景/网格/粒子/玩家/怪物/子弹/飞刃/经验球/特效/准星光标。
- * 按 world.phase 区分菜单氛围 vs 战斗场景。
+ * systems/render.js — 渲染系统（美术主体）
+ * 全部画布绘制：背景/网格/粒子/玩家/怪物/子弹/飞刃/经验球/特效/准星。
+ * 实体外观读取结构化 appearance，并应用本局风格主题(world.style)。
  * 通过 window.ZS.Systems.Render 暴露。
  */
 (function () {
@@ -9,12 +9,19 @@
   const Data = window.ZS.Data;
   const Input = window.ZS.Input;
   const System = window.ZS.Core.System;
-  const skillCalc = window.ZS.Systems.skillCalc;
 
   class Render extends System {
     constructor() {
       super({ name: 'Render' });
     }
+
+    // 当前风格强调色（无则回退默认）
+    _accent(world) {
+      const th = (world.style && world.style.theme && world.style.theme.accent) || null;
+      if (!th) return { glow: '#4fc3f7', orb: '#ffd54f', hpBar: '#e53935', xpBar: '#42a5f5' };
+      return th;
+    }
+
     draw(ctx, world) {
       if (!world || world.phase === 'menu') {
         if (world) this._drawAmbient(ctx, world);
@@ -80,81 +87,105 @@
         if (alpha <= 0.015) continue;
         if (p.glow) { ctx.shadowColor = p.color; ctx.shadowBlur = 8; }
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = alpha;
-        ctx.fill();
+        ctx.fillStyle = p.color; ctx.globalAlpha = alpha; ctx.fill();
       }
-      ctx.shadowBlur = 0;
-      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0; ctx.globalAlpha = 1;
     }
 
     _drawAura(ctx, world) {
-      const v = skillCalc.val(world, 'flameAura');
+      const v = window.ZS.Systems.skillCalc.val(world, 'flameAura');
       if (!v) return;
       const [, radius] = v;
       const p = world.player;
+      const accent = this._accent(world).glow;
       const pulse = 1 + Math.sin(world.elapsed * 5) * 0.03;
       const grad = ctx.createRadialGradient(p.x, p.y, radius * 0.3, p.x, p.y, radius * pulse);
       grad.addColorStop(0, 'rgba(255, 87, 34, 0.16)');
       grad.addColorStop(1, 'rgba(255, 87, 34, 0)');
       ctx.beginPath(); ctx.arc(p.x, p.y, radius * pulse, 0, Math.PI * 2);
       ctx.fillStyle = grad; ctx.fill();
-      ctx.strokeStyle = 'rgba(255, 120, 40, 0.35)';
-      ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = hexA(accent, 0.4); ctx.lineWidth = 2; ctx.stroke();
     }
 
+    // 玩家：发光核心 + 双层描边 + 炮管 + 护盾环（外观读取 appearance）
     _drawPlayer(ctx, world) {
       const p = world.player;
       if (!p) return;
+      const a = p.appearance || Data.player.appearance;
       const { x, y, radius } = p;
+      const t = world.elapsed;
+
       ctx.save();
       if (p.hurtFlash > 0) ctx.globalAlpha = 0.6;
+      // 外辉光
+      if (a.glow) { ctx.shadowColor = a.glow; ctx.shadowBlur = 16; }
       // 身体
       ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = Data.player.color; ctx.fill();
-      ctx.lineWidth = 3; ctx.strokeStyle = Data.player.stroke; ctx.stroke();
-      // 内圈高光
-      ctx.beginPath(); ctx.arc(x - radius * 0.2, y - radius * 0.25, radius * 0.55, 0, Math.PI * 2);
-      ctx.fillStyle = Data.player.highlight; ctx.fill();
-      // 朝向炮管
+      ctx.fillStyle = a.color; ctx.fill();
+      ctx.shadowBlur = 0;
+      // 双层描边
+      ctx.lineWidth = 3; ctx.strokeStyle = a.stroke;
+      ctx.stroke();
+      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.beginPath(); ctx.arc(x, y, radius - 2, 0, Math.PI * 2); ctx.stroke();
+      // 内部核心
+      ctx.beginPath(); ctx.arc(x, y, radius * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = a.core; ctx.globalAlpha = (p.hurtFlash > 0 ? 0.5 : 0.85); ctx.fill();
+      ctx.globalAlpha = p.hurtFlash > 0 ? 0.6 : 1;
+      // 炮管（朝向）
       const ang = Math.atan2(p.aim.y, p.aim.x);
-      ctx.strokeStyle = Data.player.gunColor; ctx.lineWidth = 4; ctx.lineCap = 'round';
+      ctx.strokeStyle = a.gunColor; ctx.lineWidth = 4; ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(x + Math.cos(ang) * radius * 0.4, y + Math.sin(ang) * radius * 0.4);
+      ctx.moveTo(x + Math.cos(ang) * radius * 0.5, y + Math.sin(ang) * radius * 0.5);
       ctx.lineTo(x + Math.cos(ang) * (radius + 8), y + Math.sin(ang) * (radius + 8));
       ctx.stroke();
       ctx.restore();
-      // 无敌闪烁
+
+      // 无敌护盾环（呼吸）
       if (p.invulnTimer > 0) {
-        ctx.beginPath(); ctx.arc(x, y, radius + 5, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(255,255,255,${0.4 + 0.4 * Math.sin(world.elapsed * 30)})`;
+        const pulse = 0.5 + 0.5 * Math.sin(t * 30);
+        ctx.beginPath(); ctx.arc(x, y, radius + 6 + pulse * 2, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${0.35 + 0.35 * Math.sin(t * 30)})`;
         ctx.lineWidth = 2; ctx.stroke();
       }
     }
 
+    // 怪物：按 appearance 绘制（含辉光/眼睛/高光/血条主题色）
     _drawEnemies(ctx, world) {
       const p = world.player;
       if (!p) return;
+      const accent = this._accent(world);
       for (const e of world.enemies) {
-        if (e.hitFlash > 0) ctx.globalAlpha = 0.65;
+        const a = e.appearance || { color: e.color, eyes: true, eyeColor: '#1a1a24', stroke: 'rgba(0,0,0,0.45)' };
+        const col = a.color;
+        const isBoss = e.tier === 'boss';
+        if (e.hitFlash > 0) ctx.globalAlpha = 0.6;
+        if (a.glow) { ctx.shadowColor = a.glow; ctx.shadowBlur = isBoss ? 22 : 12; }
+
         if (e.shape === 'square') {
-          ctx.fillStyle = e.color;
+          ctx.fillStyle = col;
           ctx.fillRect(e.x - e.radius, e.y - e.radius, e.radius * 2, e.radius * 2);
-          ctx.strokeStyle = e.tier === 'boss' ? '#ff5722' : 'rgba(0,0,0,0.45)';
-          ctx.lineWidth = e.tier === 'boss' ? 3 : 2;
+          // 内层
+          ctx.fillStyle = isBoss ? 'rgba(0,0,0,0.35)' : hexA(col, 0.25);
+          ctx.fillRect(e.x - e.radius * 0.6, e.y - e.radius * 0.6, e.radius * 1.2, e.radius * 1.2);
+          ctx.strokeStyle = a.stroke || (isBoss ? '#ff5722' : 'rgba(0,0,0,0.45)');
+          ctx.lineWidth = isBoss ? 3 : 2;
           ctx.strokeRect(e.x - e.radius, e.y - e.radius, e.radius * 2, e.radius * 2);
         } else if (e.shape === 'ellipse') {
           ctx.beginPath(); ctx.ellipse(e.x, e.y, e.radius * 1.4, e.radius, 0, 0, Math.PI * 2);
-          ctx.fillStyle = e.color; ctx.fill();
+          ctx.fillStyle = col; ctx.fill();
         } else {
           ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
-          ctx.fillStyle = e.color; ctx.fill();
-          ctx.beginPath(); ctx.arc(e.x - e.radius * 0.25, e.y - e.radius * 0.3, e.radius * 0.4, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255,255,255,0.16)'; ctx.fill();
+          ctx.fillStyle = col; ctx.fill();
+          // 内部核心
+          ctx.beginPath(); ctx.arc(e.x, e.y, e.radius * 0.45, 0, Math.PI * 2);
+          ctx.fillStyle = a.highlight || 'rgba(255,255,255,0.16)'; ctx.fill();
         }
+        ctx.shadowBlur = 0;
         ctx.globalAlpha = 1;
-        // 眼睛
-        if (e.radius >= 8) {
+
+        // 眼睛（看向玩家）
+        if (a.eyes !== false && e.radius >= 8) {
           const ang = Math.atan2(p.y - e.y, p.x - e.x);
           const ex = Math.cos(ang) * e.radius * 0.3;
           const ey = Math.sin(ang) * e.radius * 0.3;
@@ -163,18 +194,19 @@
           ctx.fillStyle = '#ffffff';
           ctx.beginPath(); ctx.arc(e.x + ex - er * 1.2, e.y + ey - er * 0.8, er, 0, Math.PI * 2); ctx.fill();
           ctx.beginPath(); ctx.arc(e.x + ex + er * 1.2, e.y + ey - er * 0.8, er, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#1a1a24';
+          ctx.fillStyle = a.eyeColor || '#1a1a24';
           ctx.beginPath(); ctx.arc(e.x + ex - er * 1.2 + Math.cos(ang) * pr, e.y + ey - er * 0.8 + Math.sin(ang) * pr, pr, 0, Math.PI * 2); ctx.fill();
           ctx.beginPath(); ctx.arc(e.x + ex + er * 1.2 + Math.cos(ang) * pr, e.y + ey - er * 0.8 + Math.sin(ang) * pr, pr, 0, Math.PI * 2); ctx.fill();
         }
-        // 精英/BOSS 血条
-        if (e.tier === 'elite' || e.tier === 'boss') {
+
+        // 精英/BOSS 血条（主题色）
+        if (e.tier === 'elite' || isBoss) {
           const bw = e.radius * 2;
           const pct = Math.max(0, e.hp / e.maxHp);
           ctx.fillStyle = 'rgba(0,0,0,0.55)';
-          ctx.fillRect(e.x - bw / 2, e.y - e.radius - 10, bw, 5);
-          ctx.fillStyle = e.tier === 'boss' ? '#ff5722' : '#ab47bc';
-          ctx.fillRect(e.x - bw / 2, e.y - e.radius - 10, bw * pct, 5);
+          ctx.fillRect(e.x - bw / 2, e.y - e.radius - 12, bw, 5);
+          ctx.fillStyle = isBoss ? (accent.hpBar || '#ff5722') : '#ab47bc';
+          ctx.fillRect(e.x - bw / 2, e.y - e.radius - 12, bw * pct, 5);
         }
       }
     }
@@ -183,6 +215,10 @@
       for (const b of world.bullets) {
         ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
         ctx.fillStyle = b.color; ctx.fill();
+        // 辉光
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.radius + 2, 0, Math.PI * 2);
+        ctx.strokeStyle = hexA(b.color, 0.5); ctx.lineWidth = 1; ctx.stroke();
+        // 拖尾
         ctx.beginPath(); ctx.arc(b.x - b.vx * 0.014, b.y - b.vy * 0.014, b.radius * 0.5, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.fill();
       }
@@ -201,17 +237,21 @@
       }
     }
 
+    // 经验球：主题色 + 辉光 + 高光
     _drawOrbs(ctx, world) {
+      const accent = this._accent(world);
+      const col = accent.orb || CONFIG.orb.color;
       const t = world.elapsed;
       for (const o of world.orbs) {
         const pulse = 1 + Math.sin(t * 6 + o.x * 0.1) * 0.12;
         ctx.beginPath(); ctx.arc(o.x, o.y, o.r * pulse, 0, Math.PI * 2);
-        ctx.fillStyle = CONFIG.orb.color; ctx.fill();
+        ctx.fillStyle = col; ctx.fill();
         ctx.beginPath(); ctx.arc(o.x - o.r * 0.2, o.y - o.r * 0.25, o.r * 0.45, 0, Math.PI * 2);
         ctx.fillStyle = CONFIG.orb.colorInner; ctx.fill();
       }
     }
 
+    // 特效：爆炸/闪电/文字/警告/枪口闪光/粒子爆散/冲击波
     _drawEffects(ctx, world) {
       const w = world.width, h = world.height;
       for (const fx of world.effects) {
@@ -236,7 +276,29 @@
           ctx.font = 'bold 60px sans-serif'; ctx.fillStyle = `rgba(255, 87, 34, ${a * 0.5})`;
           ctx.fillText('⚠', w / 2, h / 2 - 60);
           ctx.font = 'bold 34px sans-serif'; ctx.fillStyle = `rgba(255, 50, 40, ${a})`;
-          ctx.fillText(Data.bosses[Object.keys(Data.bosses)[0]].warnText, w / 2, h / 2);
+          const boss = Data.bosses[Object.keys(Data.bosses)[0]];
+          ctx.fillText(boss.warnText || '⚠ BOSS 降临！', w / 2, h / 2);
+        } else if (fx.type === 'muzzle') {
+          // 枪口闪光：快速扩张的圆环
+          const a = Math.max(0, fx.life / fx.max);
+          ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r * (1 - a * 0.6), 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 224, 130, ${a * 0.8})`; ctx.fill();
+        } else if (fx.type === 'burst') {
+          // 死亡/出生粒子爆散
+          const a = Math.max(0, fx.life / fx.max);
+          for (let i = 0; i < fx.count; i++) {
+            const seg = i / fx.count;
+            const dist = seg * fx.speed * fx.life;
+            const ang = fx.baseAng + seg * Math.PI * 2;
+            ctx.beginPath(); ctx.arc(fx.x + Math.cos(ang) * dist, fx.y + Math.sin(ang) * dist, 2.2 * a + 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = fx.color; ctx.globalAlpha = a; ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        } else if (fx.type === 'shockwave') {
+          // BOSS 登场冲击波
+          const a = Math.max(0, fx.life / fx.max);
+          ctx.beginPath(); ctx.arc(w / 2, h / 2, (1 - a) * fx.r, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(255, 87, 34, ${a})`; ctx.lineWidth = 3 + (1 - a) * 6; ctx.stroke();
         }
       }
     }
@@ -265,6 +327,16 @@
       ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
+  }
+
+  // 颜色转 rgba（支持 #rrggbb）
+  function hexA(hex, alpha) {
+    if (!hex) return 'rgba(255,255,255,' + alpha + ')';
+    const h = hex.replace('#', '');
+    const n = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+    const num = parseInt(n, 16);
+    if (isNaN(num)) return 'rgba(255,255,255,' + alpha + ')';
+    return `rgba(${(num >> 16) & 255},${(num >> 8) & 255},${num & 255},${alpha})`;
   }
 
   window.ZS = window.ZS || {};

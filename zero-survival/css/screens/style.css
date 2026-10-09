@@ -1,0 +1,83 @@
+/* ============================================================
+   screens/style.css — 风格选择界面
+   每局随机三选一的视觉主题卡片
+   ============================================================ */
+
+.style-subtitle {
+  margin-top: 8px;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: #9fb0c7;
+}
+
+.style-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.style-card {
+  padding: 14px 18px;
+  text-align: left;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(130, 165, 255, 0.25);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.13s ease, border-color 0.13s ease, transform 0.13s ease, box-shadow 0.13s ease;
+}
+
+.style-card:hover {
+  background: rgba(130, 165, 255, 0.14);
+  border-color: #ffd54f;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 213, 79, 0.18);
+}
+
+.style-card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.style-icon {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  border-radius: 12px;
+  border: 1.5px solid;
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.4);
+}
+
+.style-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.style-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffd54f;
+}
+
+.style-desc {
+  margin-top: 3px;
+  font-size: 13px;
+  color: #c6d2e2;
+}
+
+.style-swatch {
+  display: flex;
+  gap: 4px;
+}
+
+.style-swatch span {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+}

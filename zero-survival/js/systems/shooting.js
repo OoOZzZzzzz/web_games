@@ -45,7 +45,7 @@
       world.fireTimer = 1 / skillCalc.effFireRate(world);
     }
 
-    // 生成一发子弹（含穿透、暴击上色）
+    // 生成一发子弹（含穿透、暴击上色）+ 枪口闪光
     _fire(world, ang) {
       const { amount, isCrit } = skillCalc.bulletDamage(world);
       const pierce = skillCalc.val(world, 'pierce') || 0;
@@ -53,6 +53,14 @@
         damage: amount,
         isCrit,
         pierceLeft: pierce === Infinity ? Infinity : pierce,
+      });
+      // 枪口闪光
+      const p = world.player;
+      world.addFx({
+        type: 'muzzle',
+        x: p.x + Math.cos(ang) * (p.radius + 10),
+        y: p.y + Math.sin(ang) * (p.radius + 10),
+        r: 9, life: 0.08, max: 0.08,
       });
     }
 

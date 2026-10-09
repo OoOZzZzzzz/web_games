@@ -29,6 +29,13 @@
       world.kills++;
       Sfx.kill();
       world.spawnOrb(e.x, e.y, e.xp);
+      // 死亡视觉：粒子爆散（用怪物外观色）
+      world.addFx({
+        type: 'burst', x: e.x, y: e.y,
+        color: (e.appearance && e.appearance.color) || '#ffffff',
+        count: e.tier === 'boss' ? 26 : 12, speed: e.tier === 'boss' ? 200 : 130,
+        life: 0.4, max: 0.4, baseAng: Math.random() * Math.PI * 2,
+      });
       // 生命汲取：击杀回血
       const ls = skillCalc.val(world, 'lifesteal');
       if (ls) {

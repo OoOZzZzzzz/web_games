@@ -67,11 +67,31 @@
       }
     },
 
-    // 开始一局（新手确认 / 重开共用）
+    // 进入风格选择流程（开始按钮 / 死亡重开）
+    startFlow(showTutorial) {
+      this.showTutorial = showTutorial !== false;
+      // 每局随机抽 3 个风格
+      const ids = ZS.RNG.shuffle(ZS.Data.styleIds.slice()).slice(0, 3);
+      const styles = ids.map((id) => ZS.Data.styles[id]);
+      ZS.UI.manager.hide('start');
+      ZS.UI.manager.hide('death');
+      ZS.UI.manager.show('style', styles);
+    },
+
+    // 选中风格：写入世界，进入新手弹窗或直接开战
+    chooseStyle(styleId) {
+      world.style = ZS.Data.styles[styleId] || ZS.Data.styles.default;
+      ZS.UI.manager.hide('style');
+      if (this.showTutorial) ZS.UI.manager.show('tutorial');
+      else this.begin();
+    },
+
+    // 开始一局（新手确认 / 选完风格后）
     begin() {
       world.reset();
       engine.begin();
       ZS.UI.manager.hide('start');
+      ZS.UI.manager.hide('style');
       ZS.UI.manager.hide('tutorial');
       ZS.UI.manager.hide('levelup');
       ZS.UI.manager.hide('death');
@@ -80,7 +100,8 @@
       if (hud && hud.refresh) hud.refresh();
     },
 
-    restart() { this.begin(); },
+    // 重开：回到风格选择（每局重新三选一）
+    restart() { this.startFlow(false); },
 
     // 选中技能（UI 回调 → xp 系统应用并恢复）
     chooseSkill(skillId) {
