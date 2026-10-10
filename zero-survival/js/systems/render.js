@@ -54,7 +54,7 @@
       }
     }
 
-    // 物理特效粒子：加色混合 + 辉光 + 随 life 淡出/缩小
+    // 物理特效粒子：加色混合(lighter 自带辉光) + 随 life 淡出/缩小（无逐颗 shadowBlur，性能优化）
     _drawSparks(ctx, world) {
       const sp = world.sparks;
       if (!sp || !sp.length) return;
@@ -63,7 +63,6 @@
       for (const p of sp) {
         const a = Math.max(0, p.life / p.max);
         ctx.globalAlpha = a;
-        if (p.glow) { ctx.shadowColor = p.color; ctx.shadowBlur = 8; }
         ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0.4, p.size * a), 0, Math.PI * 2);
         ctx.fillStyle = p.color; ctx.fill();
       }
@@ -202,6 +201,14 @@
         if (e.hitFlash > 0) ctx.globalAlpha = 0.6;
         if (a.glow) { ctx.shadowColor = a.glow; ctx.shadowBlur = isBoss ? 22 : 12; }
 
+        // 史莱姆：原神风格专属绘制（圆滚滚 + 角冠 + 大眼 + 小脚）
+        if (e.type === 'slime') {
+          ctx.shadowBlur = 0;
+          this._drawSlime(ctx, e, p, world);
+          ctx.globalAlpha = 1;
+          continue;
+        }
+
         if (e.shape === 'square') {
           ctx.fillStyle = col;
           ctx.fillRect(e.x - e.radius, e.y - e.radius, e.radius * 2, e.radius * 2);
@@ -249,6 +256,64 @@
           ctx.fillRect(e.x - bw / 2, e.y - e.radius - 12, bw * pct, 5);
         }
       }
+    }
+
+    // 史莱姆：原神风格（圆滚滚渐变 + 顶部角冠 + 大眼 + 小脚 + 光泽）
+    _drawSlime(ctx, e, p, world) {
+      const r = e.radius;
+      const x = e.x, y = e.y;
+      const a = e.appearance || {};
+      const col = a.color || '#66bb6a';
+      const eyeCol = a.eyeColor || '#1a1a24';
+      const bodyR = r * 0.92;
+      const bodyH = r * 0.78;
+      ctx.save();
+
+      // 1. 身体（径向渐变 → 3D 圆润立体，像原神史莱姆）
+      const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.4, r * 0.1, x, y, bodyR);
+      grad.addColorStop(0, lighten(col, 0.35));   // 顶部高光
+      grad.addColorStop(0.45, col);
+      grad.addColorStop(1, shade(col, 0.62));      // 底部深色
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(x, y, bodyR, bodyH, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. 顶部"角冠"（原神史莱姆头顶小角/皇冠）
+      ctx.fillStyle = shade(col, 0.7);
+      ctx.beginPath();
+      ctx.moveTo(x - r * 0.24, y - bodyH + r * 0.12);
+      ctx.quadraticCurveTo(x, y - bodyH - r * 0.3, x + r * 0.24, y - bodyH + r * 0.12);
+      ctx.quadraticCurveTo(x, y - bodyH + r * 0.02, x - r * 0.24, y - bodyH + r * 0.12);
+      ctx.fill();
+
+      // 3. 光泽高光（左上白斑）
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.beginPath();
+      ctx.ellipse(x - r * 0.34, y - r * 0.38, r * 0.26, r * 0.16, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. 大眼睛（看向玩家，带眼白高光）
+      const ang = Math.atan2(p.y - y, p.x - x);
+      const ex = Math.cos(ang) * r * 0.3;
+      const ey = Math.sin(ang) * r * 0.3;
+      const eyeR = r * 0.2;
+      for (let s = -1; s <= 1; s += 2) {
+        const cx = x + s * r * 0.28 + ex;
+        const cy = y + r * 0.06 + ey;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(cx, cy, eyeR * 1.15, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = eyeCol;
+        ctx.beginPath(); ctx.arc(cx, cy, eyeR, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(cx - eyeR * 0.3, cy - eyeR * 0.3, eyeR * 0.38, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // 5. 底部内阴影（圆润立体，原神史莱姆无脚）
+      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.beginPath(); ctx.ellipse(x, y + bodyH * 0.55, bodyR * 0.6, bodyH * 0.35, 0, 0, Math.PI * 2); ctx.fill();
+
+      ctx.restore();
     }
 
     _drawBullets(ctx, world) {
@@ -500,6 +565,26 @@
     const num = parseInt(n, 16);
     if (isNaN(num)) return 'rgba(255,255,255,' + alpha + ')';
     return `rgba(${(num >> 16) & 255},${(num >> 8) & 255},${num & 255},${alpha})`;
+  }
+
+  // 颜色明度调整：lighten 变亮(f>1)，shade 变暗(f<1)，用于史莱姆立体渐变
+  function lighten(hex, f) {
+    const s = String(hex || '').replace('#', '');
+    const n = parseInt(s.length === 3 ? s[0] + s[0] + s[1] + s[1] + s[2] + s[2] : s, 16);
+    if (isNaN(n)) return '#fff';
+    const r = Math.min(255, Math.round(((n >> 16) & 255) * f));
+    const g = Math.min(255, Math.round(((n >> 8) & 255) * f));
+    const b = Math.min(255, Math.round((n & 255) * f));
+    return `rgb(${r},${g},${b})`;
+  }
+  function shade(hex, f) {
+    const s = String(hex || '').replace('#', '');
+    const n = parseInt(s.length === 3 ? s[0] + s[0] + s[1] + s[1] + s[2] + s[2] : s, 16);
+    if (isNaN(n)) return '#555';
+    const r = Math.round(((n >> 16) & 255) * f);
+    const g = Math.round(((n >> 8) & 255) * f);
+    const b = Math.round((n & 255) * f);
+    return `rgb(${r},${g},${b})`;
   }
 
   window.ZS = window.ZS || {};

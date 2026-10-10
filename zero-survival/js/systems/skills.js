@@ -153,10 +153,10 @@
       count: 8, color: '#555', colors: ['#555', '#666', '#444'],
       speed: 30, speedVar: 18, size: 6, gravity: -30, drag: 0.94, life: 0.9, glow: false,
     });
-    // 屏幕反馈：顿帧 + 白闪 + 轻震（张力）
-    FX.freeze(world, 0.05);
-    FX.flash(world, 0.35);
-    FX.shake(world, 0.16, 5);
+    // 屏幕反馈：顿帧 + 白闪 + 震动 已全部暂时注释（次次触发影响体验，保留供后续设计使用）
+    // FX.freeze(world, 0.05);
+    // FX.flash(world, 0.35);
+    // FX.shake(world, 0.16, 5);
   }
 
   // ---- 雷电链：普攻命中概率触发连锁闪电 ----

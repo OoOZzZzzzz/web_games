@@ -92,40 +92,38 @@
     const radius = r * (0.4 + ease * 0.7);         // 火球半径
     const fad = a;
 
+    // 1. 外圈柔和光晕（仅这里用 lighter，透亮但不刺眼）
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-
-    // 1. 体积光晕（外圈透亮）
-    const halo = ctx.createRadialGradient(x, y, radius * 0.3, x, y, radius * 1.6);
-    halo.addColorStop(0, hexA('#ffb300', 0.35 * fad));
+    const halo = ctx.createRadialGradient(x, y, radius * 0.3, x, y, radius * 1.5);
+    halo.addColorStop(0, hexA('#ff7043', 0.16 * fad));
     halo.addColorStop(1, hexA('#ff4500', 0));
     ctx.fillStyle = halo;
-    ctx.beginPath(); ctx.arc(x, y, radius * 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, radius * 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
 
-    // 2. 立体火球：顶部白热 → 中焰 → 暗红边（径向渐变，光源偏左上 → 3D 体积）
+    // 2. 立体火球本体（正常混合 → 实心橙焰，顶部暖亮非白热，避免闪屏）
     const body = ctx.createRadialGradient(x - radius * 0.2, y - radius * 0.28, radius * 0.08, x, y, radius);
-    body.addColorStop(0, '#ffffff');
-    body.addColorStop(0.22, '#fff3c4');
-    body.addColorStop(0.5, '#ff9d2e');
-    body.addColorStop(0.78, '#ff5722');
-    body.addColorStop(1, '#6e1a0c');
+    body.addColorStop(0, '#ffe0a0');   // 顶部暖亮（非刺眼纯白）
+    body.addColorStop(0.4, '#ff9d2e');
+    body.addColorStop(0.75, '#ff5722');
+    body.addColorStop(1, '#7a2a12');
     ctx.globalAlpha = fad;
     ctx.fillStyle = body;
     ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
 
-    // 3. 高光 rim（球体边缘亮环 → 立体感）
-    ctx.globalAlpha = fad * 0.75;
+    // 3. 高光 rim（球体边缘暖亮环 → 立体感）
+    ctx.globalAlpha = fad * 0.6;
     ctx.strokeStyle = hexA('#ffd180', 1);
-    ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.arc(x, y, radius * 0.98, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, radius * 0.97, 0, Math.PI * 2); ctx.stroke();
 
     // 4. 冲击环（扩张 + 淡出）
     ctx.globalAlpha = fad;
-    ctx.strokeStyle = hexA('#ff7043', 0.8);
+    ctx.strokeStyle = hexA('#ff7043', 0.7);
     ctx.lineWidth = 1.5 + (1 - a) * 2;
     ctx.beginPath(); ctx.arc(x, y, radius * (1.25 + (1 - a) * 0.4), 0, Math.PI * 2); ctx.stroke();
 
-    ctx.restore();
     ctx.globalAlpha = 1;
   });
 

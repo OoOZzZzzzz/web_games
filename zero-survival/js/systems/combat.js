@@ -18,12 +18,11 @@
       e.hp -= dmg;
       e.hitFlash = 0.08;
       if (isCrit) {
-        // 暴击：彩字 + 白金闪光 + 物理火花 + 顿帧/轻震（锐利一击）
+        // 暴击：彩字 + 局部物理火花（全屏闪/顿帧/震动已注释，避免闪屏）
         world.addText(e.x, e.y, '暴击', '#ff7043');
-        const FX = window.ZS.Systems.FX;
-        FX.freeze(world, 0.04);
-        FX.flash(world, 0.22);
-        FX.shake(world, 0.12, 3);
+        // FX.freeze(world, 0.04);
+        // FX.flash(world, 0.22);
+        // FX.shake(world, 0.12, 3);
         world.spawnParticles(e.x, e.y, {
           count: 10, colors: ['#ffd54f', '#fff3c4', '#ff7043'],
           speed: 140, speedVar: 60, size: 2, gravity: 200, drag: 0.95, life: 0.35,
@@ -40,13 +39,16 @@
       world.kills++;
       Sfx.kill();
       world.spawnOrb(e.x, e.y, e.xp);
-      // 死亡视觉：物理爆散粒子（怪物色，四散 + 重力）+ 轻震
+      // 死亡视觉：物理爆散粒子（怪物色，随体积缩放，四散 + 重力）+ 轻震
       const ecol = (e.appearance && e.appearance.color) || '#ffffff';
+      const rad = e.radius || 14;
+      const s = rad / 14;   // 相对默认大小的缩放系数（越大怪越丰富）
       world.spawnParticles(e.x, e.y, {
-        count: e.tier === 'boss' ? 24 : 14,
+        count: Math.round(10 + s * 10),            // 数量随体积
         color: ecol, colors: [ecol, '#ffffff'],
-        speed: e.tier === 'boss' ? 180 : 130, speedVar: 60,
-        size: 2.4, gravity: 220, drag: 0.95, life: 0.5,
+        speed: 90 + s * 60, speedVar: 40 + s * 30, // 速度随体积
+        size: 1.8 + s * 1.2,                       // 粒子大小随体积
+        gravity: 220, drag: 0.95, life: 0.45 + s * 0.2, // 寿命随体积
       });
       if (e.tier === 'boss') window.ZS.Systems.FX.shake(world, 0.18, 6);
       // 生命汲取：击杀回血

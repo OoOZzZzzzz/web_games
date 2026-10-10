@@ -189,7 +189,9 @@
       const angleVar = o.angleVar === undefined ? Math.PI * 2 : o.angleVar;
       const baseSpd = o.speed || 80;
       const spdVar = o.speedVar === undefined ? 40 : o.speedVar;
+      const MAX_SPARKS = 320;   // 同屏粒子上限（多敌同死卡顿优化）
       for (let i = 0; i < count; i++) {
+        if (this.sparks.length >= MAX_SPARKS) break;   // 达上限即停止生成
         const ang = angle + (Math.random() - 0.5) * angleVar;
         const spd = baseSpd + (Math.random() - 0.5) * spdVar * 2;
         const col = (o.colors && o.colors.length) ? o.colors[(Math.random() * o.colors.length) | 0] : (o.color || '#fff');
