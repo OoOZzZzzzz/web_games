@@ -17,7 +17,11 @@
     damageEnemy(world, e, dmg, isCrit = false) {
       e.hp -= dmg;
       e.hitFlash = 0.08;
-      if (isCrit) world.addText(e.x, e.y, '暴击', '#ff7043');
+      if (isCrit) {
+        // 暴击：彩字 + 火花爆
+        world.addText(e.x, e.y, '暴击', '#ff7043');
+        world.addFx({ type: 'spark', x: e.x, y: e.y, color: '#ff7043', count: 10, speed: 90, life: 0.3, max: 0.3, baseAng: Math.random() * Math.PI * 2 });
+      }
       if (e.hp <= 0) this.killEnemy(world, e);
     },
 
@@ -41,6 +45,8 @@
       if (ls) {
         const p = world.player;
         p.hp = Math.min(p.maxHp, p.hp + ls);
+        // 汲取回血：红色粒子流 敌人→玩家
+        world.addFx({ type: 'stream', x1: e.x, y1: e.y, x2: p.x, y2: p.y, color: '#ef5350', count: 12, life: 0.45, max: 0.45 });
       }
       bus.emit(EV.KILL, e);
     },

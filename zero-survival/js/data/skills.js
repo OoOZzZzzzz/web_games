@@ -20,6 +20,7 @@
       levels: ['攻击速度 +20%', '攻击速度 +40%', '攻击速度 +65%', '攻击速度 +90%', '攻击速度 +120%'],
       values: [0.20, 0.40, 0.65, 0.90, 1.20],
       effect: { type: 'stat', key: 'fireRate' },
+      visual: { kind: 'bulletTrail', color: '#ffffff', params: { streak: 1.6 } },
     },
     {
       id: 'pierce', name: '穿透弹', icon: '🎯', category: CATEGORY.attack,
@@ -27,6 +28,7 @@
       levels: ['子弹穿透1个敌人', '子弹穿透2个敌人', '子弹穿透3个敌人', '子弹穿透4个敌人', '子弹无限穿透敌人'],
       values: [1, 2, 3, 4, Infinity],
       effect: { type: 'bullet', key: 'pierce' },
+      visual: { kind: 'bulletTrail', color: '#ffd54f', params: { streak: 2.4 } },
     },
     {
       id: 'explosive', name: '爆裂弹', icon: '💥', category: CATEGORY.attack,
@@ -35,6 +37,7 @@
       // 每级：[爆炸额外伤害比例, 爆炸半径系数, 减速时长(秒)]
       values: [[0.20, 1.0, 0], [0.35, 1.3, 0], [0.55, 1.6, 0], [0.80, 1.9, 0.5], [1.20, 2.4, 1.0]],
       effect: { type: 'bullet', key: 'explosive', baseRadius: 70 },
+      visual: { kind: 'onHit', color: '#ff9800', params: { ring: 1, sparks: 8 } },
     },
     {
       id: 'multiShot', name: '多重弹', icon: '🔱', category: CATEGORY.attack,
@@ -42,6 +45,7 @@
       levels: ['同向额外发射1颗子弹', '同向额外发射2颗子弹', '同向额外发射3颗子弹', '同向额外发射4颗子弹', '同向额外发射6颗子弹'],
       values: [1, 2, 3, 4, 6],
       effect: { type: 'bullet', key: 'multiShot', spread: 0.06 },
+      visual: { kind: 'bulletTrail', color: '#ffb300', params: { sparks: 1 } },
     },
 
     // ---- 生存防御类 ----
@@ -51,6 +55,7 @@
       levels: ['最大生命值 +20', '最大生命值 +45', '最大生命值 +75', '最大生命值 +110', '最大生命值 +160'],
       values: [20, 45, 75, 110, 160],
       effect: { type: 'stat', key: 'maxHp' },
+      visual: { kind: 'onPick', color: '#81c784', params: { ring: 1, rise: 8 } },
     },
     {
       id: 'lifesteal', name: '生命汲取', icon: '🩸', category: CATEGORY.defense,
@@ -58,6 +63,7 @@
       levels: ['击杀怪物回复3生命值', '击杀怪物回复6生命值', '击杀怪物回复10生命值', '击杀怪物回复15生命值', '击杀怪物回复22生命值'],
       values: [3, 6, 10, 15, 22],
       effect: { type: 'stat', key: 'lifesteal' },
+      visual: { kind: 'onKill', color: '#ef5350', params: { stream: 1 } },
     },
     {
       id: 'haste', name: '迅捷', icon: '👟', category: CATEGORY.defense,
@@ -65,6 +71,7 @@
       levels: ['移动速度 +12%', '移动速度 +25%', '移动速度 +40%', '移动速度 +58%', '移动速度 +80%'],
       values: [0.12, 0.25, 0.40, 0.58, 0.80],
       effect: { type: 'stat', key: 'moveSpeed' },
+      visual: { kind: 'playerAura', color: '#4fc3f7', params: { trail: 1 } },
     },
     {
       id: 'armor', name: '减伤护甲', icon: '🛡️', category: CATEGORY.defense,
@@ -72,6 +79,7 @@
       levels: ['受到所有伤害 -8%', '受到所有伤害 -16%', '受到所有伤害 -25%', '受到所有伤害 -36%', '受到所有伤害 -50%'],
       values: [0.08, 0.16, 0.25, 0.36, 0.50],
       effect: { type: 'stat', key: 'armor' },
+      visual: { kind: 'playerAura', color: '#b0bec5', params: { shield: 1 } },
     },
 
     // ---- 召唤附加类 ----
@@ -83,6 +91,7 @@
       values: [[1, 0], [2, 0.20], [3, 0.40], [4, 0.65], [6, 1.00]],
       baseDamage: 6,
       effect: { type: 'summon', key: 'blade', orbitRadius: 52, attackRange: 46, cooldown: 0.55 },
+      visual: { kind: 'summon', color: '#ffd54f', params: { glow: 1, trail: 1 } },
     },
     {
       id: 'flameAura', name: '火焰光环', icon: '🔥', category: CATEGORY.summon,
@@ -91,6 +100,7 @@
       // 每级：[每秒伤害, 光环半径]
       values: [[5, 60], [8, 80], [12, 100], [18, 130], [28, 170]],
       effect: { type: 'summon', key: 'flameAura' },
+      visual: { kind: 'summon', color: '#ff5722', params: { particles: 1 } },
     },
     {
       id: 'chainLightning', name: '雷电链', icon: '⚡', category: CATEGORY.summon,
@@ -100,6 +110,7 @@
       values: [[0.20, 1, 0, 0], [0.30, 2, 0.15, 0], [0.42, 3, 0.30, 0], [0.55, 4, 0.45, 0], [0.70, 5, 0.60, 0.3]],
       baseDamage: 8,
       effect: { type: 'summon', key: 'chainLightning', chainRange: 130 },
+      visual: { kind: 'onHit', color: '#ffe082', params: { sparks: 1 } },
     },
 
     // ---- 暴击增伤类 ----
@@ -110,6 +121,7 @@
       // 每级：[暴击率, 暴击伤害加成]
       values: [[0.08, 0.15], [0.15, 0.30], [0.22, 0.50], [0.30, 0.75], [0.40, 1.10]],
       effect: { type: 'stat', key: 'crit' },
+      visual: { kind: 'onHit', color: '#ff7043', params: { burst: 1 } },
     },
     {
       id: 'attackBoost', name: '攻击强化', icon: '🗡️', category: CATEGORY.crit,
@@ -117,6 +129,7 @@
       levels: ['所有攻击伤害+12%', '所有攻击伤害+25%', '所有攻击伤害+40%', '所有攻击伤害+60%', '所有攻击伤害+90%'],
       values: [0.12, 0.25, 0.40, 0.60, 0.90],
       effect: { type: 'stat', key: 'attackBoost' },
+      visual: { kind: 'playerAura', color: '#ff7043', params: { power: 1 } },
     },
   ];
 

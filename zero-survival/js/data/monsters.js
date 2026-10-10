@@ -39,11 +39,18 @@
     },
   };
 
-  // 深合并：基类 + 具体怪物（对象递归，数组克隆）
+  // 深合并：基类 + 具体怪物（嵌套对象递归合并，数组/标量直接克隆替换）
   function merge(a, b) {
     const out = {};
     for (const k in a) out[k] = clone(a[k]);
-    for (const k in b) out[k] = clone(b[k]);
+    for (const k in b) {
+      if (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) &&
+          a[k] && typeof a[k] === 'object' && !Array.isArray(a[k])) {
+        out[k] = merge(a[k], b[k]);   // 深合并嵌套对象（appearance/stats）
+      } else {
+        out[k] = clone(b[k]);
+      }
+    }
     return out;
   }
   function clone(v) {

@@ -16,6 +16,7 @@
         const fx = world.effects[i];
         fx.life -= dt;
         if (fx.type === 'text') fx.y += (fx.vy || 0) * dt;
+        if (fx.type === 'stream') fx.flow = (fx.flow || 0) + dt * 2;   // 粒子流相位推进
         if (fx.life <= 0) world.effects.splice(i, 1);
       }
       this._updateParticles(world, dt);

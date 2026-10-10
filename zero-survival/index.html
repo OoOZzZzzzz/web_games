@@ -7,6 +7,7 @@
   <!-- 样式：按依赖顺序加载（base → ui-common → 各界面） -->
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/ui-common.css">
+  <link rel="stylesheet" href="css/visuals.css">
   <link rel="stylesheet" href="css/screens/start.css">
   <link rel="stylesheet" href="css/screens/tutorial.css">
   <link rel="stylesheet" href="css/screens/hud.css">
@@ -176,6 +177,13 @@
   <script src="js/systems/xp.js"></script>
   <script src="js/systems/death.js"></script>
   <script src="js/systems/effects.js"></script>
+  <script src="js/systems/fx.js"></script>
+  <script src="js/systems/skill-visuals.js"></script>
+  <!-- visuals 特效类别模块（依赖 FX 的 hexA） -->
+  <script src="js/visuals/aura.js"></script>
+  <script src="js/visuals/orbital.js"></script>
+  <!-- 特效类别调度系统 -->
+  <script src="js/visual-system.js"></script>
   <script src="js/systems/render.js"></script>
   <!-- ui -->
   <script src="js/ui/ui-manager.js"></script>

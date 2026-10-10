@@ -22,13 +22,17 @@
         card.className = 'skill-card';
         let pips = '';
         for (let i = 1; i <= c.maxLevel; i++) pips += `<span class="pip${i <= c.level ? ' on' : ''}"></span>`;
+        // 视觉类别（aura/orbital/burst/beam/projectile）→ 色点标签
+        let vcat = 'aura';
+        const VSys = ZS.Systems && ZS.Systems.VisualSystem;
+        if (VSys && VSys.attrFor) vcat = (VSys.attrFor(c.id).category || 'aura');
         card.innerHTML = `
           <div class="skill-card-head">
             <span class="skill-icon">${c.icon}</span>
             <div class="skill-card-info">
               <div class="skill-name">${c.name} ${c.isNew ? '<span class="skill-new">新</span>' : ''}
                 <span class="skill-cur">Lv.${c.level}</span></div>
-              <div class="skill-cat">${c.category}</div>
+              <div class="skill-cat"><span class="cat-tag"><span class="cat-dot ${vcat}"></span>${c.category}</span></div>
             </div>
             <div class="skill-pips">${pips}</div>
           </div>

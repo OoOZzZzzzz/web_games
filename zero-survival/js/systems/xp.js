@@ -101,6 +101,17 @@
       else if (skillId === 'blade') skillCalc.rebuildBlades(world);
       Sfx.select();
       bus.emit(EV.SKILL_PICK, skillId);
+      // 选中技能视觉：主题色脉动环 + 漂浮图标
+      const sk = Data.SKILL_MAP[skillId];
+      const p = world.player;
+      const vcolor = (sk.visual && sk.visual.color) || '#ffd54f';
+      if (p) {
+        world.addFx({ type: 'ring', x: p.x, y: p.y, color: vcolor, r: 42, life: 0.5, max: 0.5 });
+        if (sk.id === 'vitality') {
+          world.addFx({ type: 'burst', x: p.x, y: p.y, color: '#81c784', count: 10, speed: 90, life: 0.5, max: 0.5, baseAng: 0 });
+        }
+        world.addText(p.x, p.y - p.radius - 14, sk.icon + ' ' + sk.name, vcolor);
+      }
       if (world.engine) world.engine.resume();
       const need = Data.XP.xpNeeded(world.level);
       if (need > 0 && world.xp >= need) this._onLevelUp(world);

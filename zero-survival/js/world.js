@@ -140,6 +140,7 @@
         radius: skin.radius,
         life: CONFIG.attack.bulletLife,
         pierceLeft: opts.pierceLeft || 0,
+        streak: opts.streak || 1,   // 彗星尾长度（急速/穿透增强）
         skin,
         color: isCrit ? (skin.critColor || '#ff7043') : skin.color,
         hitIds: new Set(),

@@ -47,20 +47,26 @@
 
     // 生成一发子弹（含穿透、暴击上色）+ 枪口闪光
     _fire(world, ang) {
+      const p = world.player;
       const { amount, isCrit } = skillCalc.bulletDamage(world);
       const pierce = skillCalc.val(world, 'pierce') || 0;
-      world.spawnBullet(world.player.x, world.player.y, ang, {
+      const rapid = skillCalc.val(world, 'rapidFire') || 0;
+      // 彗星尾长度：穿透(余像) + 急速(拖尾) 增强
+      let streak = 1;
+      if (pierce) streak += 1.6;
+      if (rapid) streak += 0.8;
+      world.spawnBullet(p.x, p.y, ang, {
         damage: amount,
         isCrit,
         pierceLeft: pierce === Infinity ? Infinity : pierce,
+        streak: Math.min(4.2, streak),
       });
-      // 枪口闪光
-      const p = world.player;
+      // 枪口闪光（急速时更亮更大）
       world.addFx({
         type: 'muzzle',
         x: p.x + Math.cos(ang) * (p.radius + 10),
         y: p.y + Math.sin(ang) * (p.radius + 10),
-        r: 9, life: 0.08, max: 0.08,
+        r: rapid ? 11 : 9, life: 0.08, max: 0.08,
       });
     }
 

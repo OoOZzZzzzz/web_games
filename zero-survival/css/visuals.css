@@ -1,0 +1,41 @@
+/* ============================================================
+   visuals.css — 特效类别主题样式
+   对应 js/visuals/ 特效类别模块：aura(光环) / orbital(环绕)
+   为技能卡/选技能界面提供类别色标签与主题。
+   ============================================================ */
+
+/* 视觉类别色标签（出现在技能卡分类行） */
+.cat-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #dbe6f5;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(150, 185, 255, 0.18);
+  border-radius: 999px;
+}
+
+/* 类别色小圆点 */
+.cat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* ---- aura 光环类（金黄系） ---- */
+.cat-dot.aura { background: #ffd54f; color: #ffd54f; }
+/* ---- orbital 环绕类（蓝紫系） ---- */
+.cat-dot.orbital { background: #7e57c2; color: #7e57c2; }
+/* ---- burst 爆散类（橙红系） ---- */
+.cat-dot.burst { background: #ff7043; color: #ff7043; }
+/* ---- beam 光束类（青黄系） ---- */
+.cat-dot.beam { background: #ffe082; color: #ffe082; }
+/* ---- projectile 弹道类（天蓝系） ---- */
+.cat-dot.projectile { background: #4fc3f7; color: #4fc3f7; }
+
+/* 技能卡分类行带色点 */
+.skill-cat .cat-tag { margin-top: 3px; }

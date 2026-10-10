@@ -33,7 +33,14 @@
   function merge(a, b) {
     const out = {};
     for (const k in a) out[k] = clone(a[k]);
-    for (const k in b) out[k] = clone(b[k]);
+    for (const k in b) {
+      if (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) &&
+          a[k] && typeof a[k] === 'object' && !Array.isArray(a[k])) {
+        out[k] = merge(a[k], b[k]);   // 深合并嵌套对象（appearance/stats）
+      } else {
+        out[k] = clone(b[k]);
+      }
+    }
     return out;
   }
   function clone(v) {

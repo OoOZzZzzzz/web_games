@@ -38,6 +38,7 @@
       this._drawBlades(ctx, world);
       this._drawEffects(ctx, world);
       this._drawPlayer(ctx, world);
+      this._drawSkillPassives(ctx, world);
       this._drawCursor(ctx, world);
     }
 
@@ -105,6 +106,16 @@
       ctx.beginPath(); ctx.arc(p.x, p.y, radius * pulse, 0, Math.PI * 2);
       ctx.fillStyle = grad; ctx.fill();
       ctx.strokeStyle = hexA(accent, 0.4); ctx.lineWidth = 2; ctx.stroke();
+      // 浮动火焰粒子
+      const t = world.elapsed;
+      for (let i = 0; i < 7; i++) {
+        const a = t * 0.9 + (i / 7) * Math.PI * 2;
+        const rr = radius * (0.45 + 0.4 * Math.sin(t * 2 + i));
+        const px = p.x + Math.cos(a) * rr;
+        const py = p.y + Math.sin(a) * rr;
+        ctx.beginPath(); ctx.arc(px, py, 2 + Math.sin(t * 5 + i) * 1.2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 140, 50, ${0.4 + 0.3 * Math.sin(t * 5 + i)})`; ctx.fill();
+      }
     }
 
     // 玩家：发光核心 + 双层描边 + 炮管 + 护盾环（外观读取 appearance）
@@ -215,26 +226,45 @@
       const skin = window.ZS.Data.resolveBulletStyle('gold'); // 兜底
       for (const b of world.bullets) {
         const sk = b.skin || skin;
-        // 辉光
+        const ang = Math.atan2(b.vy, b.vx);
+        const stre = (b.streak || 1) * b.radius;
+        // 穿透余像：长光尾（半透明）
+        if (b.streak > 1.5) {
+          ctx.beginPath();
+          ctx.moveTo(b.x - Math.cos(ang) * stre, b.y - Math.sin(ang) * stre);
+          ctx.lineTo(b.x - Math.cos(ang) * (stre + 14), b.y - Math.sin(ang) * (stre + 14));
+          ctx.strokeStyle = b.color; ctx.globalAlpha = 0.25; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
         if (sk.glow) { ctx.shadowColor = sk.glow; ctx.shadowBlur = 10; }
-        ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-        ctx.fillStyle = b.color; ctx.fill();
+        // 彗星状弹体：拖尾线 + 亮核（尾长随 streak）
+        ctx.beginPath();
+        ctx.moveTo(b.x + Math.cos(ang) * b.radius, b.y + Math.sin(ang) * b.radius);
+        ctx.lineTo(b.x - Math.cos(ang) * stre, b.y - Math.sin(ang) * stre);
+        ctx.strokeStyle = b.color; ctx.lineWidth = b.radius; ctx.lineCap = 'round';
+        ctx.stroke();
         ctx.shadowBlur = 0;
-        // 拖尾（皮肤色）
-        ctx.beginPath(); ctx.arc(b.x - b.vx * 0.014, b.y - b.vy * 0.014, b.radius * 0.5, 0, Math.PI * 2);
-        ctx.fillStyle = sk.trail || 'rgba(255,255,255,0.65)'; ctx.fill();
+        // 亮核
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.radius * 0.6, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.9; ctx.fill();
+        ctx.globalAlpha = 1;
       }
     }
 
     _drawBlades(ctx, world) {
       for (const b of world.blades) {
+        // 旋转光迹（尾迹点）
+        ctx.beginPath(); ctx.arc(b.x - Math.cos(b.ang) * 7, b.y - Math.sin(b.ang) * 7, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,213,79,0.5)'; ctx.fill();
         ctx.save();
         ctx.translate(b.x, b.y);
         ctx.rotate(b.ang);
+        ctx.shadowColor = '#ffd54f'; ctx.shadowBlur = 8;
         ctx.beginPath();
         ctx.moveTo(11, 0); ctx.lineTo(-6, -6); ctx.lineTo(-2, 0); ctx.lineTo(-6, 6); ctx.closePath();
         ctx.fillStyle = '#e8edf4'; ctx.fill();
         ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.shadowBlur = 0;
         ctx.restore();
       }
     }
@@ -253,8 +283,10 @@
       }
     }
 
-    // 特效：爆炸/闪电/文字/警告/枪口闪光/粒子爆散/冲击波
+    // 特效：由 FX 系统统一绘制（新增特效类型请注册到 systems/fx.js）
     _drawEffects(ctx, world) {
+      window.ZS.Systems.FX.draw(ctx, world);
+      return; // 旧内联分支已迁移至 systems/fx.js（以下为遗留，不执行）
       const w = world.width, h = world.height;
       for (const fx of world.effects) {
         if (fx.type === 'explosion') {
@@ -301,7 +333,107 @@
           const a = Math.max(0, fx.life / fx.max);
           ctx.beginPath(); ctx.arc(w / 2, h / 2, (1 - a) * fx.r, 0, Math.PI * 2);
           ctx.strokeStyle = `rgba(255, 87, 34, ${a})`; ctx.lineWidth = 3 + (1 - a) * 6; ctx.stroke();
+        } else if (fx.type === 'stream') {
+          // 粒子流（如汲取回血）：源→目标流动
+          const a = Math.max(0, fx.life / fx.max);
+          const flow = fx.flow || 0;
+          for (let i = 0; i < fx.count; i++) {
+            const t = ((i / fx.count) + flow) % 1;
+            const px = fx.x1 + (fx.x2 - fx.x1) * t;
+            const py = fx.y1 + (fx.y2 - fx.y1) * t;
+            ctx.beginPath(); ctx.arc(px, py, 2.2 * a + 0.6, 0, Math.PI * 2);
+            ctx.fillStyle = fx.color; ctx.globalAlpha = a; ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        } else if (fx.type === 'spark') {
+          // 火花爆散（爆裂/雷链/暴击）
+          const a = Math.max(0, fx.life / fx.max);
+          const spread = (1 - a) * fx.speed;
+          for (let i = 0; i < fx.count; i++) {
+            const ang = fx.baseAng + (i / fx.count) * Math.PI * 2 + (i % 2) * 0.5;
+            ctx.beginPath(); ctx.arc(fx.x + Math.cos(ang) * spread, fx.y + Math.sin(ang) * spread, 2.2 * a + 0.4, 0, Math.PI * 2);
+            ctx.fillStyle = fx.color; ctx.globalAlpha = a; ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        } else if (fx.type === 'ring') {
+          // 脉动扩散环（选技/回血）
+          const a = Math.max(0, fx.life / fx.max);
+          ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r * (1 - a) + 4, 0, Math.PI * 2);
+          ctx.strokeStyle = fx.color; ctx.globalAlpha = a; ctx.lineWidth = 2 + (1 - a) * 3; ctx.stroke();
+          ctx.globalAlpha = 1;
+        } else if (fx.type === 'streak') {
+          // 直线光迹（穿透余像）
+          const a = Math.max(0, fx.life / fx.max);
+          ctx.beginPath(); ctx.moveTo(fx.x1, fx.y1); ctx.lineTo(fx.x2, fx.y2);
+          ctx.strokeStyle = fx.color; ctx.globalAlpha = a; ctx.lineWidth = 2; ctx.stroke();
+          ctx.globalAlpha = 1;
         }
+      }
+    }
+
+    // 技能被动视觉：由 VisualSystem 按类别+属性调度（新增特效类别请注册到 visuals/）
+    _drawSkillPassives(ctx, world) {
+      window.ZS.Systems.VisualSystem.draw(ctx, world);
+      return; // 旧内联分支已迁移至 visual-system.js + visuals/（以下为遗留，不执行）
+      const p = world.player;
+      if (!p) return;
+      const lv = (id) => world.skills[id] || 0;
+      const { x, y, radius } = p;
+      const t = world.elapsed;
+      const SKILL_MAP = window.ZS.Data.SKILL_MAP;
+
+      // 减伤护甲：旋转护盾弧段
+      if (lv('armor') > 0) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.strokeStyle = 'rgba(180,205,220,0.95)';
+        ctx.lineWidth = 3; ctx.lineCap = 'round';
+        ctx.shadowColor = '#b0bec5'; ctx.shadowBlur = 6;
+        for (let i = 0; i < 3; i++) {
+          const a0 = t * 0.9 + (i * Math.PI * 2) / 3;
+          ctx.beginPath(); ctx.arc(0, 0, radius + 9, a0, a0 + 0.9); ctx.stroke();
+        }
+        ctx.shadowBlur = 0; ctx.restore();
+      }
+      // 攻击强化：力量红光环（辉光）
+      if (lv('attackBoost') > 0) {
+        const a = 0.3 + 0.2 * Math.sin(t * 4);
+        ctx.save();
+        ctx.shadowColor = '#ff5722'; ctx.shadowBlur = 12;
+        ctx.beginPath(); ctx.arc(x, y, radius + 12, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,80,40,${a})`; ctx.lineWidth = 3; ctx.stroke();
+        ctx.restore();
+      }
+      // 迅捷：常驻环绕速度线
+      if (lv('haste') > 0) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(79,195,247,0.75)';
+        ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+        for (let i = 0; i < 3; i++) {
+          const ang = t * 1.2 + (i * Math.PI * 2) / 3;
+          const bx = x + Math.cos(ang) * (radius + 13);
+          const by = y + Math.sin(ang) * (radius + 13);
+          ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx - Math.cos(ang) * 10, by - Math.sin(ang) * 10); ctx.stroke();
+        }
+        ctx.restore();
+      }
+      // 暴击：玩家核心金色闪烁
+      if (lv('crit') > 0) {
+        ctx.beginPath(); ctx.arc(x, y, radius * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,213,79,${0.5 + 0.4 * Math.sin(t * 8)})`; ctx.fill();
+      }
+      // 每个已拥有技能：一个环绕光点（明显提示技能已附着）
+      const owned = Object.keys(world.skills);
+      if (owned.length) {
+        const r = radius + 16;
+        owned.forEach((id, i) => {
+          const sk = SKILL_MAP[id];
+          const col = (sk && sk.visual && sk.visual.color) || '#ffd54f';
+          const ang = t * 0.7 + (i / owned.length) * Math.PI * 2;
+          ctx.beginPath(); ctx.arc(x + Math.cos(ang) * r, y + Math.sin(ang) * r, 3, 0, Math.PI * 2);
+          ctx.fillStyle = col; ctx.globalAlpha = 0.9; ctx.fill();
+          ctx.globalAlpha = 1;
+        });
       }
     }
 
