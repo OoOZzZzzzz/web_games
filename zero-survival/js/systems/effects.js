@@ -19,6 +19,23 @@
         if (fx.type === 'stream') fx.flow = (fx.flow || 0) + dt * 2;   // 粒子流相位推进
         if (fx.life <= 0) world.effects.splice(i, 1);
       }
+      // 物理特效粒子：重力 + 阻力 + 位置 + 寿命
+      for (let i = world.sparks.length - 1; i >= 0; i--) {
+        const p = world.sparks[i];
+        p.vy += p.gravity * dt;
+        p.vx *= p.drag; p.vy *= p.drag;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt;
+        if (p.life <= 0) world.sparks.splice(i, 1);
+      }
+      // 屏幕反馈衰减（震动/顿帧/白闪）
+      if (world.shake.dur > 0) {
+        world.shake.t += dt;
+        if (world.shake.t >= world.shake.dur) world.shake.dur = 0;
+      }
+      if (world.freeze > 0) world.freeze -= dt;
+      if (world.flash > 0) world.flash -= dt * 3;
       this._updateParticles(world, dt);
     }
 

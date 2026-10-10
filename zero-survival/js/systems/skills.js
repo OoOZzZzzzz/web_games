@@ -141,7 +141,22 @@
         if (slow > 0) e.slowTimer = Math.max(e.slowTimer, slow);
       }
     }
-    world.addFx({ type: 'explosion', x, y, r: radius, life: 0.35 });
+    const FX = window.ZS.Systems.FX;
+    // 3D 火球（fx.js 渲染）
+    world.addFx({ type: 'explosion', x, y, r: radius, life: 0.35, color: '#ff9800', glow: '#ff5722' });
+    // 物理余烬（冲→挂→下坠）+ 烟（上浮）
+    world.spawnParticles(x, y, {
+      count: 16, colors: ['#ffb300', '#ff7043', '#ff5722', '#ffe0b2'],
+      speed: 130, speedVar: 70, size: 2.6, gravity: 260, drag: 0.95, life: 0.6,
+    });
+    world.spawnParticles(x, y, {
+      count: 8, color: '#555', colors: ['#555', '#666', '#444'],
+      speed: 30, speedVar: 18, size: 6, gravity: -30, drag: 0.94, life: 0.9, glow: false,
+    });
+    // 屏幕反馈：顿帧 + 白闪 + 轻震（张力）
+    FX.freeze(world, 0.05);
+    FX.flash(world, 0.35);
+    FX.shake(world, 0.16, 5);
   }
 
   // ---- 雷电链：普攻命中概率触发连锁闪电 ----

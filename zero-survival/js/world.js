@@ -16,7 +16,13 @@
     orbs: [],
     blades: [],
     effects: [],
+    sparks: [],         // 物理特效粒子（爆散/烟/余烬/火花，与背景氛围粒子 world.particles 区分）
     player: null,
+
+    // ---- 屏幕反馈（Juice）----
+    shake: { t: 0, dur: 0, mag: 0 },   // 屏幕震动
+    freeze: 0,                          // 顿帧（秒）
+    flash: 0,                           // 白闪（0..1）
 
     // ---- 一局状态 ----
     phase: 'menu',          // 'menu' | 'battle'
@@ -46,6 +52,10 @@
       this.orbs.length = 0;
       this.blades.length = 0;
       this.effects.length = 0;
+      this.sparks.length = 0;
+      this.shake.t = this.shake.dur = this.shake.mag = 0;
+      this.freeze = 0;
+      this.flash = 0;
       this.player = null;
       this.phase = 'battle';
       this.level = 0;
@@ -168,6 +178,34 @@
     addFx(fx) { this.effects.push(fx); },
     addText(x, y, str, color) {
       this.effects.push({ type: 'text', x, y, str, color, life: 0.9, vy: -55 });
+    },
+
+    // 生成物理粒子群（带速度/重力/阻力/寿命）
+    // opts: {count, x,y, color, colors[], speed, speedVar, angle, angleVar, size, sizeVar, gravity, drag, life, glow}
+    spawnParticles(x, y, opts) {
+      const o = opts || {};
+      const count = o.count || 10;
+      const angle = o.angle === undefined ? 0 : o.angle;
+      const angleVar = o.angleVar === undefined ? Math.PI * 2 : o.angleVar;
+      const baseSpd = o.speed || 80;
+      const spdVar = o.speedVar === undefined ? 40 : o.speedVar;
+      for (let i = 0; i < count; i++) {
+        const ang = angle + (Math.random() - 0.5) * angleVar;
+        const spd = baseSpd + (Math.random() - 0.5) * spdVar * 2;
+        const col = (o.colors && o.colors.length) ? o.colors[(Math.random() * o.colors.length) | 0] : (o.color || '#fff');
+        this.sparks.push({
+          x, y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd,
+          life: (o.life || 0.5) * (0.6 + Math.random() * 0.8),
+          max: (o.life || 0.5),
+          size: (o.size || 3) * (0.6 + Math.random() * 0.8),
+          color: col,
+          glow: o.glow === undefined ? true : o.glow,
+          drag: o.drag === undefined ? 0.94 : o.drag,
+          gravity: o.gravity || 0,
+        });
+      }
     },
 
     // 按组件字段过滤

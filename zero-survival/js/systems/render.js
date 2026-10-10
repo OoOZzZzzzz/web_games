@@ -28,6 +28,10 @@
         return;
       }
       const w = world.width, h = world.height;
+      // 屏幕震动：整体平移战场
+      const off = window.ZS.Systems.FX.shakeOffset(world);
+      ctx.save();
+      ctx.translate(off.x, off.y);
       this._drawBackground(ctx, w, h);
       this._drawGrid(ctx, w, h);
       this._drawParticles(ctx, world, 0.35);
@@ -37,9 +41,34 @@
       this._drawBullets(ctx, world);
       this._drawBlades(ctx, world);
       this._drawEffects(ctx, world);
+      this._drawSparks(ctx, world);
       this._drawPlayer(ctx, world);
       this._drawSkillPassives(ctx, world);
+      ctx.restore();
+      // 光标不随战场震动
       this._drawCursor(ctx, world);
+      // 白闪（命中/爆炸瞬间全屏白）
+      if (world.flash > 0.02) {
+        ctx.fillStyle = `rgba(255,255,255,${Math.min(0.9, world.flash)})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
+
+    // 物理特效粒子：加色混合 + 辉光 + 随 life 淡出/缩小
+    _drawSparks(ctx, world) {
+      const sp = world.sparks;
+      if (!sp || !sp.length) return;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (const p of sp) {
+        const a = Math.max(0, p.life / p.max);
+        ctx.globalAlpha = a;
+        if (p.glow) { ctx.shadowColor = p.color; ctx.shadowBlur = 8; }
+        ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0.4, p.size * a), 0, Math.PI * 2);
+        ctx.fillStyle = p.color; ctx.fill();
+      }
+      ctx.restore();
+      ctx.globalAlpha = 1;
     }
 
     _drawAmbient(ctx, world) {

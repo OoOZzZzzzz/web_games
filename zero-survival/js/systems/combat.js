@@ -18,9 +18,16 @@
       e.hp -= dmg;
       e.hitFlash = 0.08;
       if (isCrit) {
-        // 暴击：彩字 + 火花爆
+        // 暴击：彩字 + 白金闪光 + 物理火花 + 顿帧/轻震（锐利一击）
         world.addText(e.x, e.y, '暴击', '#ff7043');
-        world.addFx({ type: 'spark', x: e.x, y: e.y, color: '#ff7043', count: 10, speed: 90, life: 0.3, max: 0.3, baseAng: Math.random() * Math.PI * 2 });
+        const FX = window.ZS.Systems.FX;
+        FX.freeze(world, 0.04);
+        FX.flash(world, 0.22);
+        FX.shake(world, 0.12, 3);
+        world.spawnParticles(e.x, e.y, {
+          count: 10, colors: ['#ffd54f', '#fff3c4', '#ff7043'],
+          speed: 140, speedVar: 60, size: 2, gravity: 200, drag: 0.95, life: 0.35,
+        });
       }
       if (e.hp <= 0) this.killEnemy(world, e);
     },
@@ -33,13 +40,15 @@
       world.kills++;
       Sfx.kill();
       world.spawnOrb(e.x, e.y, e.xp);
-      // 死亡视觉：粒子爆散（用怪物外观色）
-      world.addFx({
-        type: 'burst', x: e.x, y: e.y,
-        color: (e.appearance && e.appearance.color) || '#ffffff',
-        count: e.tier === 'boss' ? 26 : 12, speed: e.tier === 'boss' ? 200 : 130,
-        life: 0.4, max: 0.4, baseAng: Math.random() * Math.PI * 2,
+      // 死亡视觉：物理爆散粒子（怪物色，四散 + 重力）+ 轻震
+      const ecol = (e.appearance && e.appearance.color) || '#ffffff';
+      world.spawnParticles(e.x, e.y, {
+        count: e.tier === 'boss' ? 24 : 14,
+        color: ecol, colors: [ecol, '#ffffff'],
+        speed: e.tier === 'boss' ? 180 : 130, speedVar: 60,
+        size: 2.4, gravity: 220, drag: 0.95, life: 0.5,
       });
+      if (e.tier === 'boss') window.ZS.Systems.FX.shake(world, 0.18, 6);
       // 生命汲取：击杀回血
       const ls = skillCalc.val(world, 'lifesteal');
       if (ls) {

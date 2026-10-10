@@ -41,6 +41,34 @@
         if (fn) fn(ctx, fx, world, t, w, h);
       }
     },
+
+    // ===================== 屏幕反馈 / 粒子工厂（Juice） =====================
+
+    // 屏幕震动（短、衰减、幅度小）
+    shake(world, dur = 0.15, mag = 4) {
+      world.shake.t = 0;
+      world.shake.dur = dur;
+      world.shake.mag = mag;
+    },
+    // 顿帧（命中瞬间极短停顿）
+    freeze(world, s = 0.06) { if (world.freeze < s) world.freeze = s; },
+    // 白闪（全屏瞬时白，0..1）
+    flash(world, amt = 0.5) { if (world.flash < amt) world.flash = amt; },
+
+    // 物理粒子群（封装 world.spawnParticles）
+    burst(world, x, y, opts) { world.spawnParticles(x, y, opts); },
+
+    // 当前震动偏移量（render 用）：衰减的随机偏移
+    shakeOffset(world) {
+      const s = world.shake;
+      if (s.dur <= 0) return { x: 0, y: 0 };
+      const k = 1 - (s.t / s.dur);
+      if (k <= 0) { s.dur = 0; return { x: 0, y: 0 }; }
+      return {
+        x: (Math.random() - 0.5) * 2 * s.mag * k,
+        y: (Math.random() - 0.5) * 2 * s.mag * k,
+      };
+    },
   };
 
   // ===================== 注册各特效渲染器 =====================
@@ -55,47 +83,50 @@
     ctx.shadowBlur = 0; ctx.globalAlpha = 1;
   });
 
-  // 爆炸：白热核心 + 软辉光 + 冲击环 + 飞散余烬粒子（重力 + 减速 + 辉光）
+  // 爆炸：3D 立体火球（体积光晕 + 分层明暗 + 高光 rim + 冲击环）。物理余烬/烟在触发处生成
   FX.register('explosion', (ctx, fx) => {
-    const a = Math.max(0, fx.life / fx.max);          // 1 → 0
-    const ease = 1 - Math.pow(1 - a, 3);              // ease-out 扩张
-    const col = fx.color || '#ff9800';
-    const glow = fx.glow || '#ff5722';
+    const a = Math.max(0, fx.life / fx.max);       // 1 → 0
+    const ease = 1 - Math.pow(1 - a, 3);           // ease-out 快速扩张后缓退
     const r = fx.r || 70;
-    const baseAng = fx.baseAng || 0;
+    const x = fx.x, y = fx.y;
+    const radius = r * (0.4 + ease * 0.7);         // 火球半径
+    const fad = a;
 
-    // 1. 外圈软辉光（径向渐变）
-    const grad = ctx.createRadialGradient(fx.x, fx.y, r * 0.2, fx.x, fx.y, r * (1.1 - ease * 0.3));
-    grad.addColorStop(0, hexA(col, 0.5 * a));
-    grad.addColorStop(1, hexA(col, 0));
-    ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.arc(fx.x, fx.y, r * (1.1 - ease * 0.3), 0, Math.PI * 2); ctx.fill();
-
-    // 2. 白热核心（先亮后衰）
-    const core = Math.max(0, a - 0.35) / 0.65;
-    ctx.beginPath(); ctx.arc(fx.x, fx.y, r * 0.5 * (0.55 + ease * 0.35), 0, Math.PI * 2);
-    ctx.fillStyle = hexA('#fff7e0', core);
-    ctx.fill();
-
-    // 3. 冲击环（扩张 + 淡出）
-    ctx.beginPath(); ctx.arc(fx.x, fx.y, r * (0.2 + ease), 0, Math.PI * 2);
-    ctx.strokeStyle = hexA(glow, 0.7 * a);
-    ctx.lineWidth = 2 + (1 - a) * 3; ctx.stroke();
-
-    // 4. 飞散余烬粒子（减速 + 重力 + 辉光）
     ctx.save();
-    ctx.shadowColor = glow; ctx.shadowBlur = 10;
-    const N = fx.count || 14;
-    for (let i = 0; i < N; i++) {
-      const ang = baseAng + (i / N) * Math.PI * 2;
-      const spd = (26 + (i % 5) * 14) * ease;
-      const px = fx.x + Math.cos(ang) * spd;
-      const py = fx.y + Math.sin(ang) * spd + ease * ease * 46 * ((i % 3) - 1);
-      ctx.beginPath(); ctx.arc(px, py, Math.max(0.5, 2.4 * (1 - ease * 0.55)), 0, Math.PI * 2);
-      ctx.fillStyle = hexA(i % 2 ? col : '#ffe0b2', a);
-      ctx.fill();
-    }
+    ctx.globalCompositeOperation = 'lighter';
+
+    // 1. 体积光晕（外圈透亮）
+    const halo = ctx.createRadialGradient(x, y, radius * 0.3, x, y, radius * 1.6);
+    halo.addColorStop(0, hexA('#ffb300', 0.35 * fad));
+    halo.addColorStop(1, hexA('#ff4500', 0));
+    ctx.fillStyle = halo;
+    ctx.beginPath(); ctx.arc(x, y, radius * 1.6, 0, Math.PI * 2); ctx.fill();
+
+    // 2. 立体火球：顶部白热 → 中焰 → 暗红边（径向渐变，光源偏左上 → 3D 体积）
+    const body = ctx.createRadialGradient(x - radius * 0.2, y - radius * 0.28, radius * 0.08, x, y, radius);
+    body.addColorStop(0, '#ffffff');
+    body.addColorStop(0.22, '#fff3c4');
+    body.addColorStop(0.5, '#ff9d2e');
+    body.addColorStop(0.78, '#ff5722');
+    body.addColorStop(1, '#6e1a0c');
+    ctx.globalAlpha = fad;
+    ctx.fillStyle = body;
+    ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+
+    // 3. 高光 rim（球体边缘亮环 → 立体感）
+    ctx.globalAlpha = fad * 0.75;
+    ctx.strokeStyle = hexA('#ffd180', 1);
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(x, y, radius * 0.98, 0, Math.PI * 2); ctx.stroke();
+
+    // 4. 冲击环（扩张 + 淡出）
+    ctx.globalAlpha = fad;
+    ctx.strokeStyle = hexA('#ff7043', 0.8);
+    ctx.lineWidth = 1.5 + (1 - a) * 2;
+    ctx.beginPath(); ctx.arc(x, y, radius * (1.25 + (1 - a) * 0.4), 0, Math.PI * 2); ctx.stroke();
+
     ctx.restore();
+    ctx.globalAlpha = 1;
   });
 
   // 闪电：多段锯齿电弧 + 双层辉光 + 末端电火花
