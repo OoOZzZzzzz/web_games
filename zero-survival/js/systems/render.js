@@ -208,6 +208,13 @@
           ctx.globalAlpha = 1;
           continue;
         }
+        // 疾行虫：半椭圆圆顶 + 波浪底边（随移速波动）+ 漂浮
+        if (e.type === 'crawler') {
+          ctx.shadowBlur = 0;
+          this._drawCrawler(ctx, e, p, world);
+          ctx.globalAlpha = 1;
+          continue;
+        }
 
         if (e.shape === 'square') {
           ctx.fillStyle = col;
@@ -258,61 +265,87 @@
       }
     }
 
-    // 史莱姆：原神风格（圆滚滚渐变 + 顶部角冠 + 大眼 + 小脚 + 光泽）
+    // 史莱姆：淡色圆润圆丘 + 深色椭圆眼 + 变形弹跳 + 顶部高光，无地面黑影、底边圆角
     _drawSlime(ctx, e, p, world) {
       const r = e.radius;
       const x = e.x, y = e.y;
       const a = e.appearance || {};
       const col = a.color || '#66bb6a';
-      const eyeCol = a.eyeColor || '#1a1a24';
-      const bodyR = r * 0.92;
-      const bodyH = r * 0.78;
+      // 跳跃状态由移动系统(hopEnemy)计算：hopH 高度0..1 / hopSX/hopSY 压缩拉伸
+      const hopH = e.hopH || 0;
+      const hopY = hopH * ((e.hop && e.hop.heightMul) || 0.95) * r;  // 离地高度
+      const sx = e.hopSX || 1;
+      const sy = e.hopSY || 1;
       ctx.save();
+      ctx.translate(x, y - hopY);
+      ctx.scale(sx, sy);
+      ctx.globalAlpha = 1;                       // 不透明（避免半透明在深色底叠出黑圈）
 
-      // 1. 身体（径向渐变 → 3D 圆润立体，像原神史莱姆）
-      const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.4, r * 0.1, x, y, bodyR);
-      grad.addColorStop(0, lighten(col, 0.35));   // 顶部高光
-      grad.addColorStop(0.45, col);
-      grad.addColorStop(1, shade(col, 0.62));      // 底部深色
-      ctx.fillStyle = grad;
+      // 【暂注释】渐变/高光，先隔离是否为它们导致黑圈 —— 身体用纯色
+      // const grad = ctx.createRadialGradient(0, -r * 0.5, r * 0.05, 0, -r * 0.15, r);
+      // grad.addColorStop(0, lighten(col, 0.8));
+      // grad.addColorStop(0.55, lighten(col, 0.25));
+      // grad.addColorStop(1, col);
+      ctx.fillStyle = col;   // 纯色身体
+      // 圆润圆顶 + 圆角底边（半圆末端圆润，非锐利平切）
       ctx.beginPath();
-      ctx.ellipse(x, y, bodyR, bodyH, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, r, r, 0, 0, Math.PI, true);            // 上半圆（圆顶）
+      ctx.quadraticCurveTo(-r * 0.97, r * 0.32, -r * 0.55, r * 0.44);  // 左下圆角
+      ctx.quadraticCurveTo(0, r * 0.58, r * 0.55, r * 0.44);          // 底部微弧
+      ctx.quadraticCurveTo(r * 0.97, r * 0.32, r * 0.97, 0);          // 右下圆角
+      ctx.closePath();
       ctx.fill();
 
-      // 2. 顶部"角冠"（原神史莱姆头顶小角/皇冠）
-      ctx.fillStyle = shade(col, 0.7);
-      ctx.beginPath();
-      ctx.moveTo(x - r * 0.24, y - bodyH + r * 0.12);
-      ctx.quadraticCurveTo(x, y - bodyH - r * 0.3, x + r * 0.24, y - bodyH + r * 0.12);
-      ctx.quadraticCurveTo(x, y - bodyH + r * 0.02, x - r * 0.24, y - bodyH + r * 0.12);
-      ctx.fill();
+      // 【暂注释】顶部高光
+      // ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      // ctx.beginPath(); ctx.ellipse(-r * 0.3, -r * 0.5, r * 0.28, r * 0.16, -0.4, 0, Math.PI * 2); ctx.fill();
 
-      // 3. 光泽高光（左上白斑）
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.beginPath();
-      ctx.ellipse(x - r * 0.34, y - r * 0.38, r * 0.26, r * 0.16, -0.4, 0, Math.PI * 2);
-      ctx.fill();
+      // 眼睛：读外观属性（数据驱动）→ 比淡肤色更深的同系绿、柔软清晰，不发黑
+      const eyeCol = a.eyeColor || shade(col, 0.55);
+      ctx.fillStyle = eyeCol;
+      ctx.beginPath(); ctx.ellipse(-r * 0.22, -r * 0.26, r * 0.11, r * 0.17, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r * 0.22, -r * 0.26, r * 0.11, r * 0.17, 0, 0, Math.PI * 2); ctx.fill();
 
-      // 4. 大眼睛（看向玩家，带眼白高光）
-      const ang = Math.atan2(p.y - y, p.x - x);
-      const ex = Math.cos(ang) * r * 0.3;
-      const ey = Math.sin(ang) * r * 0.3;
-      const eyeR = r * 0.2;
-      for (let s = -1; s <= 1; s += 2) {
-        const cx = x + s * r * 0.28 + ex;
-        const cy = y + r * 0.06 + ey;
-        ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.arc(cx, cy, eyeR * 1.15, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = eyeCol;
-        ctx.beginPath(); ctx.arc(cx, cy, eyeR, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.arc(cx - eyeR * 0.3, cy - eyeR * 0.3, eyeR * 0.38, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      ctx.globalAlpha = 1;   // 无地面黑影
+    }
+
+    // 疾行虫：半椭圆纯色身形（不透明）+ 底边锯齿状圆角齿（随移速起伏）+ 数据驱动豆豆眼
+    _drawCrawler(ctx, e, p, world) {
+      const r = e.radius;
+      const x = e.x, y = e.y;
+      const a = e.appearance || {};
+      const col = a.color || '#ef5350';
+      const t = world.elapsed;
+      const rx = r * 0.95, ry = r * 1.3;           // 半椭圆：沿短轴切（底窄、身高，不扁）
+      const waveAmp = r * 0.1;                     // 齿高随波浪起伏幅度
+      const waveFreq = 5 + (e.speed || 90) / 40;   // 越快起伏越急
+      const phase = t * waveFreq;
+      ctx.save();
+      ctx.translate(x, y);
+      // 身体：上半圆顶（不透明，纯色，同史莱姆）+ 锯齿状圆角齿底边
+      ctx.beginPath();
+      ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI, true);   // 上半圆顶（右→上→左）
+      const M = 7;                                      // 齿数
+      const toothH = r * 0.26;                          // 齿突出高度
+      for (let i = 0; i < M; i++) {
+        const xl = -rx + (i / M) * (rx * 2);
+        const xr = -rx + ((i + 1) / M) * (rx * 2);
+        const cx = (xl + xr) / 2;
+        const h = toothH + waveAmp * Math.sin(phase + i * 1.2);   // 圆角齿，随波浪起伏
+        ctx.quadraticCurveTo(cx, h, xr, 0);
       }
-
-      // 5. 底部内阴影（圆润立体，原神史莱姆无脚）
-      ctx.fillStyle = 'rgba(0,0,0,0.12)';
-      ctx.beginPath(); ctx.ellipse(x, y + bodyH * 0.55, bodyR * 0.6, bodyH * 0.35, 0, 0, Math.PI * 2); ctx.fill();
-
+      ctx.closePath();
+      ctx.fillStyle = col;   // 纯色全身，不透明
+      ctx.fill();
+      // 顶部高光（柔和，纯色不透明，仅提亮）
+      ctx.fillStyle = 'rgba(255,255,255,0.22)';
+      ctx.beginPath(); ctx.ellipse(-rx * 0.28, -ry * 0.5, rx * 0.28, ry * 0.14, -0.35, 0, Math.PI * 2); ctx.fill();
+      // 眼睛：读外观属性（数据驱动），比肤色深一档，椭圆豆豆眼，和史莱姆一致
+      const eyeCol = a.eyeColor || shade(col, 0.55);
+      ctx.fillStyle = eyeCol;
+      ctx.beginPath(); ctx.ellipse(-r * 0.22, -ry * 0.32, r * 0.11, r * 0.16, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r * 0.22, -ry * 0.32, r * 0.11, r * 0.16, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
 

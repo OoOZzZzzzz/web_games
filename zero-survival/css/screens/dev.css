@@ -1,0 +1,120 @@
+/* ============================================================
+   screens/dev.css — 开发者面板（模型/动作/特效预览）
+   tab 页签 / 预览画布 / 横向选择 chips
+   ============================================================ */
+
+.dev-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 0 20px 12px;
+}
+.dev-tab {
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: rgba(190, 210, 235, 0.8);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.dev-tab:hover { color: #e8f1ff; background: rgba(120, 180, 255, 0.08); }
+.dev-tab.active {
+  color: #10223a;
+  background: linear-gradient(135deg, #8fd4ff, #38b6ff);
+  box-shadow: 0 5px 14px rgba(60, 170, 255, 0.3);
+}
+
+/* 预览画布容器 */
+.preview-wrap {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(150, 190, 255, 0.16);
+  background: radial-gradient(120% 120% at 50% 0%, #10182a, #080d16);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.5);
+}
+.preview-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.dev-ctrl { display: flex; flex-direction: column; gap: 10px; }
+
+/* 简介区（怪物/技能/主题描述） */
+.dev-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(150, 190, 255, 0.10);
+  border-radius: 12px;
+}
+.dev-desc:empty { display: none; }
+.dev-desc-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #eaf3ff;
+}
+.dev-desc-name i { font-style: normal; }
+.dev-desc-tag {
+  align-self: flex-start;
+  padding: 2px 9px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #10223a;
+  background: linear-gradient(135deg, #8fd4ff, #38b6ff);
+  border-radius: 999px;
+}
+.dev-desc-intro {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(185, 205, 230, 0.85);
+}
+.dev-desc-lv {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: #ffd97a;
+}
+.dev-desc-swatch {
+  width: 100%;
+  height: 26px;
+  margin-top: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(150, 190, 255, 0.2);
+}
+
+/* 横向选择 chips */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip-sel {
+  padding: 7px 12px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #cfe0f5;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(150, 190, 255, 0.16);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.chip-sel:hover { background: rgba(120, 180, 255, 0.12); }
+.chip-sel.active {
+  color: #10223a;
+  background: linear-gradient(135deg, #8fd4ff, #38b6ff);
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(60, 170, 255, 0.3);
+}

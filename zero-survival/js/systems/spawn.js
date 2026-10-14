@@ -67,12 +67,61 @@
         const dx = p.x - e.x;
         const dy = p.y - e.y;
         const dist = Math.hypot(dx, dy) || 0.001;
-        const spd = e.slowTimer > 0 ? e.speed * 0.5 : e.speed;
-        e.x += (dx / dist) * spd * dt;
-        e.y += (dy / dist) * spd * dt;
+        // bouncy（史莱姆）→ 贴地跳跃；其余 → 平滑滑行
+        if (e.features && e.features.includes('bouncy')) {
+          this._hopEnemy(world, e, p, dt, dx, dy, dist);
+        } else {
+          const spd = e.slowTimer > 0 ? e.speed * 0.5 : e.speed;
+          e.x += (dx / dist) * spd * dt;
+          e.y += (dy / dist) * spd * dt;
+          // 疾行虫：漂浮移动时拖出少量粒子尾迹（体现"快"）
+          if (e.type === 'crawler' && Math.random() < 0.45) {
+            world.spawnParticles(e.x - (dx / dist) * e.radius * 1.3, e.y - (dy / dist) * e.radius * 1.3, {
+              count: 1, color: 'rgba(239,83,80,0.5)', speed: 8, size: 1.5, gravity: 0, drag: 0.9, life: 0.4, glow: false,
+            });
+          }
+        }
         if (dist < e.radius + p.radius && p.invulnTimer <= 0) {
           Combat.hurtPlayer(world, e.damage, dx, dy, dist);
         }
+      }
+    }
+
+    // 史莱姆贴地跳跃（丝滑版）：起跳→空中抛物线→落地软压→再跳
+    // 水平位移用 sin 缓动（起跳/落地柔和、中途最利落），落地 squash 用 ease-out 弹回，
+    // 每跳节奏微随机避免机械。计算 hopH/hopSX/hopSY 供渲染读取。
+    _hopEnemy(world, e, p, dt, dx, dy, dist) {
+      const hop = e.hop;
+      e.hopT += dt;
+      if (e.hopT >= (e.hopCycle || hop.cycle)) {
+        e.hopT = 0;
+        e.hopCycle = hop.cycle * (0.88 + Math.random() * 0.24);  // 每跳微调，自然
+      }
+      const cycle = e.hopCycle || hop.cycle;
+      const ph = Math.min(1, e.hopT / cycle);    // 0..1 一跳
+      const airFrac = hop.airFrac;
+      const inAir = ph < airFrac;
+      const t = inAir ? ph / airFrac : 1;        // 空中进度 0..1
+      const h = Math.sin(Math.PI * t);           // 抛物线弧高 0..1
+      // 空中水平位移：sin 缓动（ease-in-out），起跳/落地都柔和，中途最利落
+      if (inAir) {
+        const spd = e.slowTimer > 0 ? e.speed * 0.5 : e.speed;
+        const k = Math.sin(Math.PI * t) / airFrac;   // 峰值在弧顶
+        e.x += (dx / dist) * spd * k * dt;
+        e.y += (dy / dist) * spd * k * dt;
+      }
+      e.hopH = h;
+      // 连续压缩/拉伸：起跳伸、空中挺、下落缓收、落地软压弹回（无硬跳变）
+      if (inAir) {
+        const rise = Math.cos(Math.PI * t);      // >0 上升 <0 下落
+        e.hopSX = 1 - h * 0.16;                  // 空中略收窄（挺拔）
+        e.hopSY = 1 + h * 0.4 + (rise > 0 ? h * 0.18 : 0);  // 上升更伸、下落缓收
+      } else {
+        const rec = (ph - airFrac) / (1 - airFrac);       // 落地恢复进度 0..1
+        const easeOut = 1 - (1 - rec) * (1 - rec);        // 先快后慢，丝滑弹回
+        const squash = (1 - easeOut) * 0.26;              // 刚落地最扁
+        e.hopSX = 1 + squash * 1.05;
+        e.hopSY = 1 - squash;
       }
     }
   }

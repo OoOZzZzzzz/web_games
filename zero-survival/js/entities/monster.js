@@ -30,6 +30,13 @@
       this.damage = def.stats.damage;
       this.speed = def.stats.speed;
       this.xp = def.stats.xp;
+      // 跳跃状态（bouncy 特性用，供移动系统写入、渲染系统读取）
+      this.hop = def.hop || { cycle: 0.8, airFrac: 0.55, heightMul: 0.85 };
+      this.hopT = Math.random() * this.hop.cycle;  // 错开相位，避免全场同跳
+      this.hopCycle = this.hop.cycle;   // 当前一跳周期（可每跳随机微调，丝滑不机械）
+      this.hopH = 0;      // 当前空中高度 0..1（移动系统算）
+      this.hopSX = 1;     // 横向压缩系数
+      this.hopSY = 1;     // 纵向拉伸系数
     }
 
     // 由 typeId 解析并实例化

@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="css/ui-common.css">
   <link rel="stylesheet" href="css/visuals.css">
   <link rel="stylesheet" href="css/screens/start.css">
+  <link rel="stylesheet" href="css/screens/panels.css">
+  <link rel="stylesheet" href="css/screens/dev.css">
   <link rel="stylesheet" href="css/screens/tutorial.css">
   <link rel="stylesheet" href="css/screens/hud.css">
   <link rel="stylesheet" href="css/screens/levelup.css">
@@ -43,50 +45,32 @@
     <div class="hud-hint">拾取经验球，击败来袭怪物！</div>
   </div>
 
-  <!-- 开始界面 -->
+  <!-- 主菜单（控制台式 dock） -->
   <div id="start-screen" class="overlay">
-    <div class="start-box">
-      <!-- 顶部氛围光斑（灵动漂浮） -->
-      <span class="orb orb-a"></span>
-      <span class="orb orb-b"></span>
-      <span class="orb orb-c"></span>
-
-      <!-- 顶部小标题分隔 -->
-      <div class="start-kicker">
-        <span class="line"></span>
-        <span class="diamond"></span>
-        <span class="kicker-text">ROGUE-LIKE SURVIVAL</span>
-        <span class="diamond"></span>
-        <span class="line"></span>
+    <!-- 左上角：标题 -->
+    <header class="menu-brand">
+      <span class="brand-emblem">⚔️</span>
+      <div class="brand-text">
+        <h1 class="brand-title">零级求生</h1>
+        <span class="brand-sub" id="menu-tagline">技能狂潮 · Rogue-Like</span>
       </div>
+      <span class="menu-version" id="menu-version"></span>
+    </header>
 
-      <!-- 徽章：双旋转光环 -->
-      <div class="game-emblem">
-        <span class="emblem-ring ring-1"></span>
-        <span class="emblem-ring ring-2"></span>
-        <span class="emblem-icon">⚔️</span>
-      </div>
+    <!-- 面板宿主（点背景遮罩关闭） -->
+    <div id="panel-host" class="panel-host hidden"></div>
 
-      <!-- 主标题 -->
-      <h1 class="game-title">
-        <span class="t-line">零级求生</span>
-        <span class="t-line accent">技能狂潮</span>
-      </h1>
-      <p class="game-subtitle">开局0级 · 对抗无尽怪物 · 拾取经验构筑专属流派</p>
-
-      <!-- 流派标签 -->
-      <div class="feature-chips">
-        <span class="chip"><span class="chip-ico">🧹</span>全屏割草</span>
-        <span class="chip"><span class="chip-ico">🔥</span>站场灼烧</span>
-        <span class="chip"><span class="chip-ico">🛡️</span>生存苟命</span>
-      </div>
-
-      <!-- 开始按钮 -->
-      <button id="btn-start" class="btn btn-primary">
+    <!-- 底部 dock：面板项 + 右下角开始按钮 -->
+    <footer class="menu-dock-wrap">
+      <nav class="menu-dock">
+        <!-- 面板项由 screen-start 动态生成 -->
+      </nav>
+      <button id="btn-start" class="btn btn-primary btn-start">
         <span class="btn-label">开始游戏</span>
+        <span class="btn-kbd">▶</span>
       </button>
-      <div class="start-hint">— 点击按钮 或 按任意键 开始 —</div>
-    </div>
+    </footer>
+    <div class="menu-hint">— 选择模式与场景 · 开始你的生存之旅 —</div>
   </div>
 
   <!-- 风格选择（每局随机三选一） -->
@@ -160,6 +144,7 @@
   <script src="js/data/skills.js"></script>
   <script src="js/data/styles.js"></script>
   <script src="js/data/bulletStyles.js"></script>
+  <script src="js/data/uiMenu.js"></script>
   <!-- entities（OOP 实体类，依赖 data，先于 systems/world） -->
   <script src="js/entities/appearance.js"></script>
   <script src="js/entities/base.js"></script>
@@ -187,6 +172,13 @@
   <script src="js/systems/render.js"></script>
   <!-- ui -->
   <script src="js/ui/ui-manager.js"></script>
+  <script src="js/ui/settings-store.js"></script>
+  <script src="js/ui/panel.js"></script>
+  <script src="js/ui/dev-preview.js"></script>
+  <script src="js/ui/panels/panel-settings.js"></script>
+  <script src="js/ui/panels/panel-mode.js"></script>
+  <script src="js/ui/panels/panel-scene.js"></script>
+  <script src="js/ui/panels/panel-dev.js"></script>
   <script src="js/ui/screen-start.js"></script>
   <script src="js/ui/screen-style.js"></script>
   <script src="js/ui/screen-tutorial.js"></script>

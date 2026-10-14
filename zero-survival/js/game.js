@@ -70,9 +70,16 @@
     // 进入风格选择流程（开始按钮 / 死亡重开）
     startFlow(showTutorial) {
       this.showTutorial = showTutorial !== false;
-      // 每局随机抽 3 个风格
+      // 优先采用主菜单选定的场景主题；否则每局随机抽 3 个风格
+      const pref = (ZS.UI.store && ZS.UI.store.get('scene'));
+      const prefStyle = pref && pref !== 'random' ? ZS.Data.styles[pref] : null;
       const ids = ZS.RNG.shuffle(ZS.Data.styleIds.slice()).slice(0, 3);
       const styles = ids.map((id) => ZS.Data.styles[id]);
+      // 若选了固定场景，把它作为三选之一置前（保证一定可选到）
+      if (prefStyle) {
+        const i = styles.indexOf(prefStyle);
+        if (i >= 0) { styles.splice(i, 1); styles.unshift(prefStyle); }
+      }
       ZS.UI.manager.hide('start');
       ZS.UI.manager.hide('death');
       ZS.UI.manager.show('style', styles);

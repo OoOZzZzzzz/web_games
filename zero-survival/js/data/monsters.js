@@ -11,15 +11,18 @@
     slime: {
       name: '史莱姆', unlockLv: 0, shape: 'circle', radius: 14,
       stats: { hp: 30, speed: 58, damage: 8, xp: 8 },
-      appearance: { color: '#66bb6a', highlight: 'rgba(255,255,255,0.16)' },
+      // 肤色统一用同色系纯色（深浅渐变，不发黑）；眼睛取更深的同系绿（软、清晰、非黑）
+      appearance: { color: '#66bb6a', highlight: 'rgba(255,255,255,0.16)', eyeColor: '#3f8f5f', eyes: 'bean' },
       features: ['bouncy'],
+      hop: { cycle: 0.8, airFrac: 0.5, heightMul: 0.95 },
       onDeath: 'splash',
       desc: '绿色小圆球，基础怪，数量最多',
     },
     crawler: {
       name: '疾行虫', unlockLv: 2, shape: 'ellipse', radius: 11,
       stats: { hp: 25, speed: 120, damage: 6, xp: 10 },
-      appearance: { color: '#ef5350' },
+      // 半椭圆身形 + 波浪腰线；眼睛用数据驱动的深色豆豆椭圆（同史莱姆做法）
+      appearance: { color: '#ef5350', eyeColor: '#a63a3a', eyes: 'bean' },
       features: ['fast', 'zigzag'],
       desc: '红色小虫，移速快，血量低，喜欢围堵',
     },

@@ -8,6 +8,7 @@
   let ctx = null;
   let master = null;
   let enabled = true;
+  let volume = 0.35;   // 主音量 0..1（默认 0.35）
 
   function ensure() {
     if (ctx) return ctx;
@@ -15,9 +16,14 @@
     if (!AC) return null;
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = 0.35;
+    master.gain.value = volume;
     master.connect(ctx.destination);
     return ctx;
+  }
+
+  // 音量变化：更新 gain（已创建则即时生效）
+  function applyVolume() {
+    if (master) master.gain.value = volume;
   }
 
   function tone(type, freq0, freq1, dur, vol = 0.3) {
@@ -46,6 +52,8 @@
     hurt() { ensure(); tone('square', 160, 70, 0.14, 0.22); },
     boss() { ensure(); tone('sawtooth', 90, 60, 0.6, 0.28); setTimeout(() => tone('sawtooth', 70, 45, 0.8, 0.30), 200); },
     setEnabled(v) { enabled = !!v; },
+    setVolume(v) { volume = Math.max(0, Math.min(1, v)); applyVolume(); },
+    getVolume() { return volume; },
   };
 
   window.ZS = window.ZS || {};
