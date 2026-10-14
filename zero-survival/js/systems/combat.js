@@ -43,14 +43,24 @@
       const ecol = (e.appearance && e.appearance.color) || '#ffffff';
       const rad = e.radius || 14;
       const s = rad / 14;   // 相对默认大小的缩放系数（越大怪越丰富）
-      world.spawnParticles(e.x, e.y, {
-        count: Math.round(10 + s * 10),            // 数量随体积
-        color: ecol, colors: [ecol, '#ffffff'],
-        speed: 90 + s * 60, speedVar: 40 + s * 30, // 速度随体积
-        size: 1.8 + s * 1.2,                       // 粒子大小随体积
-        gravity: 220, drag: 0.95, life: 0.45 + s * 0.2, // 寿命随体积
-      });
-      if (e.tier === 'boss') window.ZS.Systems.FX.shake(world, 0.18, 6);
+      if (e.type === 'golem') {
+        // 重甲傀儡：玻璃瓶碎裂四溅 + 内部主题色水花四溅 + 冲击环（单独死亡特效）
+        const tint = (e.appearance && (e.appearance.tint || e.appearance.color)) || '#ff8a50';
+        world.addFx({ type: 'golemBreak', x: e.x, y: e.y, r: rad * 4, life: 0.7, color: tint, baseAng: Math.random() * Math.PI * 2, shards: 16 });
+        world.spawnParticles(e.x, e.y, { count: 18, colors: [tint, '#ffffff'], speed: 170, speedVar: 60, size: 2.2, gravity: 380, drag: 0.95, life: 0.7 });
+        world.spawnParticles(e.x, e.y, { count: 10, colors: ['#dfe8f2', '#c3cfdf'], speed: 130, speedVar: 50, size: 2.4, gravity: 320, drag: 0.96, life: 0.6 });
+        window.ZS.Systems.FX.shake(world, 0.2, 7);
+      } else {
+        // 普通怪物：物理爆散粒子（怪物色，随体积缩放，四散 + 重力）+ 轻震
+        world.spawnParticles(e.x, e.y, {
+          count: Math.round(10 + s * 10),            // 数量随体积
+          color: ecol, colors: [ecol, '#ffffff'],
+          speed: 90 + s * 60, speedVar: 40 + s * 30, // 速度随体积
+          size: 1.8 + s * 1.2,                       // 粒子大小随体积
+          gravity: 220, drag: 0.95, life: 0.45 + s * 0.2, // 寿命随体积
+        });
+        if (e.tier === 'boss') window.ZS.Systems.FX.shake(world, 0.18, 6);
+      }
       // 生命汲取：击杀回血
       const ls = skillCalc.val(world, 'lifesteal');
       if (ls) {

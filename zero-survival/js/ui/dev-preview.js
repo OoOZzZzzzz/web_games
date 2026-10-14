@@ -296,7 +296,12 @@
     showMonster(typeId) {
       mode = 'monster';
       _clear();
-      const e = ZS.Entities.Monster.fromData(typeId, null);
+      // 应用主题，让磨砂玻璃内的液体呈主题色（默认岩浆，随场景切换）
+      let th = null;
+      const scene = ZS.UI.store && ZS.UI.store.get('scene');
+      const themeId = (scene && scene !== 'random') ? scene : 'ember';
+      th = (ZS.Data.styles[themeId] || {}).theme || null;
+      const e = ZS.Entities.Monster.fromData(typeId, th);
       e.x = world.width / 2; e.y = world.height / 2 + 10;
       e._baseY = e.y;
       world.enemies.push(e);
@@ -318,6 +323,11 @@
         if (e.x > world.width - 44 || e.x < 44) e._dir *= -1;
         e.y = (e._baseY || e.y) + Math.sin(world.elapsed * 1.5) * 6;
         world.spawnParticles(e.x - e._dir * 14, e.y, { count: 1, color: 'rgba(239,83,80,0.5)', speed: 8, size: 1.5, gravity: 0, drag: 0.9, life: 0.4, glow: false });
+      } else if (e.type === 'golem') {
+        // 重甲傀儡：正弦晃动，让瓶内浅水随方向倾斜 + 加速度剧烈晃动
+        e._px0 = e._px0 || (world.width / 2);
+        e.x = e._px0 + Math.sin(world.elapsed * 1.2) * 90;
+        e.y = (e._baseY || e.y) + Math.sin(world.elapsed * 0.6) * 14;
       } else {
         e.y = e._baseY + Math.sin(world.elapsed * 2 + (e.x || 0)) * 3;
       }

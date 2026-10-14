@@ -32,6 +32,8 @@
 
     update(dt) {
       if (!this.world) return;
+      // 全局时间轴：世界/渲染/特效（蠕动、流体、波浪）都依赖它推进
+      this.world.elapsed += dt;
       // 仅调用定义了 update 的系统（如 Render 只绘制、无 update）
       for (const s of this.systems) if (s.update) s.update(this.world, dt);
     }

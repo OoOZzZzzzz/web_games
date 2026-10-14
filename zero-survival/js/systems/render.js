@@ -215,6 +215,13 @@
           ctx.globalAlpha = 1;
           continue;
         }
+        // 重甲傀儡：磨砂玻璃瓶 + 主题色液体（岩浆/冰水等），液体随移动涌动
+        if (e.type === 'golem') {
+          ctx.shadowBlur = 0;
+          this._drawGolem(ctx, e, p, world);
+          ctx.globalAlpha = 1;
+          continue;
+        }
 
         if (e.shape === 'square') {
           ctx.fillStyle = col;
@@ -318,21 +325,22 @@
       const col = a.color || '#ef5350';
       const t = world.elapsed;
       const rx = r * 0.95, ry = r * 1.3;           // 半椭圆：沿短轴切（底窄、身高，不扁）
-      const waveAmp = r * 0.1;                     // 齿高随波浪起伏幅度
-      const waveFreq = 5 + (e.speed || 90) / 40;   // 越快起伏越急
+      const waveAmp = r * 0.17;                    // 蠕动幅度（明显）
+      const waveFreq = 3 + (e.speed || 90) / 45;   // 蠕动快慢
       const phase = t * waveFreq;
       ctx.save();
       ctx.translate(x, y);
-      // 身体：上半圆顶（不透明，纯色，同史莱姆）+ 锯齿状圆角齿底边
+      // 身体：上半圆顶（不透明，纯色，同史莱姆）+ 锯齿状圆角齿底边（蠕动）
       ctx.beginPath();
       ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI, true);   // 上半圆顶（右→上→左）
-      const M = 7;                                      // 齿数
-      const toothH = r * 0.26;                          // 齿突出高度
+      const M = 8;                                      // 齿数
+      const toothH = r * 0.3;                           // 齿突出高度
       for (let i = 0; i < M; i++) {
         const xl = -rx + (i / M) * (rx * 2);
         const xr = -rx + ((i + 1) / M) * (rx * 2);
         const cx = (xl + xr) / 2;
-        const h = toothH + waveAmp * Math.sin(phase + i * 1.2);   // 圆角齿，随波浪起伏
+        // 底边蠕动：行进波沿身体爬（像虫足蠕动）+ 二次波，更有机
+        const h = toothH + waveAmp * Math.sin(i * 1.5 - phase * 1.3) + waveAmp * 0.5 * Math.sin(i * 3.1 + phase * 0.7);
         ctx.quadraticCurveTo(cx, h, xr, 0);
       }
       ctx.closePath();
@@ -347,6 +355,48 @@
       ctx.beginPath(); ctx.ellipse(-r * 0.22, -ry * 0.32, r * 0.11, r * 0.16, 0, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(r * 0.22, -ry * 0.32, r * 0.11, r * 0.16, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
+    }
+
+    // 重甲傀儡：玻璃外壳 + 内部水（岩浆），两个独立对象（各自属性）
+    _drawGolem(ctx, e, p, world) {
+      const r = e.radius;
+      const x = e.x, y = e.y;
+      const a = e.appearance || {};
+      const tint = a.tint || a.color || '#ff8a50';
+      const shell = a.color || '#cfd8dc';
+      const t = world.elapsed;
+      const hw = r;
+      const wall = r * 0.3;
+      const ihw = hw - wall;
+      const dt = Math.min(0.05, Math.max(0.001, t - (e._lastT || t)));
+      e._lastT = t;
+      // 懒初始化两个独立对象（水 + 玻璃外壳）
+      if (!e.liquid) e.liquid = new window.ZS.Entities.Liquid(tint, ihw);
+      if (!e.shell) e.shell = new window.ZS.Entities.GlassShell(shell, hw, wall);
+      const liquid = e.liquid;
+      const shellObj = e.shell;
+      // 容器加速度 → 水被带动（惯性，力反向，让水晃动）
+      const vx = e.x - (e._px || e.x);
+      const vy = e.y - (e._py || e.y);
+      const accX = vx - (e._vx || 0);
+      const accY = vy - (e._vy || 0);
+      e._vx = vx; e._vy = vy; e._px = e.x; e._py = e.y;
+      const forceX = -accX * 0.12;
+      const forceY = -accY * 0.12;
+      // 受击：水被冲击力冲起（FLIP，涌向内壁顶部再受重力落下）+ 外壳开裂 / 掉渣
+      if (e.hp < (e._hp || e.hp)) {
+        const dmg = (e._hp || e.hp) - e.hp;        // 本次受到的伤害
+        const imp = shellObj.onHit(x, y, world);   // 返回击点（局部坐标）
+        liquid.hit(imp.x, imp.y, ihw * (3 + dmg * 1.3));   // 晃动幅度随伤害增强
+      }
+      e._hp = e.hp;
+      // 水更新（FLIP 粒子：重力 + 晃动 + 不可压缩斥力 + 壁碰）
+      liquid.update(dt, forceX, forceY);
+      // 绘制顺序：水 → 玻璃外壳 → 蜘蛛网裂纹（只在壁上，不遮水）
+      const crack = Math.max(0, Math.min(1, 1 - e.hp / (e.maxHp || 1)));
+      liquid.draw(ctx, x, y);
+      shellObj.drawBody(ctx, x, y, hw, tint);
+      shellObj.drawCracks(ctx, x, y, hw, crack, dt);
     }
 
     _drawBullets(ctx, world) {

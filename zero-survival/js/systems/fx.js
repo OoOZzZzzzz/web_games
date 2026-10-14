@@ -275,6 +275,87 @@
     ctx.globalAlpha = 1;
   });
 
+  // 重甲傀儡死亡：写实版——不规则玻璃碎片飞溅下落 + 水团/水滴/细雾 + 冲击环
+  FX.register('golemBreak', (ctx, fx) => {
+    const a = Math.max(0, fx.life / fx.max);      // 1 → 0
+    const k = 1 - a;                              // 0 → 1 爆开进度
+    const x = fx.x, y = fx.y;
+    const col = fx.color || '#ff8a50';
+    const R = fx.r || 60;
+    const base = fx.baseAng || 0;
+    const rr = (n) => { const s = Math.sin(n * 927.1 + 411.7) * 43758.5453; return s - Math.floor(s); };
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    // === 1. 玻璃碎片：不规则棱角多边形，大小悬殊，先四溅后受重力下落 ===
+    const NS = 14;
+    for (let i = 0; i < NS; i++) {
+      const ang = base + (i / NS) * Math.PI * 2 + (rr(i) - 0.5) * 0.8;
+      const spd = R * (0.5 + rr(i * 3) * 1.1);                       // 抛速
+      const px = x + Math.cos(ang) * spd * k;
+      const py = y + Math.sin(ang) * spd * k + (rr(i * 5) - 0.4) * R * 0.5 + k * k * R * 0.5;   // 上抛 + 重力下落
+      const sz = (0.3 + rr(i * 7) * 1.6) * R * 0.16;                 // 大块到碎渣
+      const rot = k * (2 + rr(i) * 6);                               // 翻滚
+      const vn = 4 + ((rr(i * 9) * 3) | 0);                          // 4-6 顶点（不规则）
+      ctx.save();
+      ctx.translate(px, py); ctx.rotate(rot);
+      ctx.beginPath();
+      for (let v = 0; v < vn; v++) {
+        const va = (v / vn) * Math.PI * 2;
+        const vr = sz * (0.6 + rr(i * 11 + v) * 0.8);
+        const vx = Math.cos(va) * vr, vy = Math.sin(va) * vr;
+        if (v === 0) ctx.moveTo(vx, vy); else ctx.lineTo(vx, vy);
+      }
+      ctx.closePath();
+      // 玻璃双色面（半透明 + 高光棱边）
+      ctx.fillStyle = rr(i * 13) < 0.5 ? `rgba(214,228,242,${0.45 * a + 0.2})` : `rgba(182,202,225,${0.5 * a + 0.2})`;
+      ctx.fill();
+      ctx.strokeStyle = `rgba(248,252,255,${a * 0.85})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+    // === 2. 水花：大水团 + 水滴 + 细雾（高抛 + 重力） ===
+    // 大水团（几个半透明 blob，渐散）
+    for (let i = 0; i < 4; i++) {
+      const ang = base + (i / 4) * Math.PI * 2 + (rr(i + 40) - 0.5) * 0.6;
+      const spd = R * (0.8 + rr(i + 42) * 1.3);
+      const px = x + Math.cos(ang) * spd * k;
+      const py = y + Math.sin(ang) * spd * k - k * R * 0.7 + k * k * R * 1.0;
+      const br = (0.6 + rr(i + 44) * 0.9) * R * 0.13 * (1 - a * 0.4);
+      ctx.beginPath(); ctx.arc(px, py, br, 0, Math.PI * 2);
+      ctx.fillStyle = hexA(col, a * 0.5);
+      ctx.fill();
+    }
+    // 水滴（多个，大小/抛高/远近不一）
+    for (let i = 0; i < 18; i++) {
+      const ang = base + (i / 18) * Math.PI * 2 + (rr(i + 60) - 0.5) * 1.1;
+      const spd = R * (0.7 + rr(i + 62) * 1.4);
+      const px = x + Math.cos(ang) * spd * k;
+      const py = y + Math.sin(ang) * spd * k - k * R * (0.7 + rr(i + 64) * 0.5) + k * k * R * 0.9;
+      const dr = (0.3 + rr(i + 66) * 1.7) * a;    // 大小不一
+      ctx.beginPath(); ctx.arc(px, py, dr, 0, Math.PI * 2);
+      ctx.fillStyle = hexA(col, (0.75 + rr(i + 68) * 0.25) * a);
+      ctx.fill();
+    }
+    // 细雾（细小淡点，溅成雾）
+    for (let i = 0; i < 12; i++) {
+      const ang = base + (i / 12) * Math.PI * 2 + (rr(i + 80) - 0.5) * 1.6;
+      const spd = R * (1.0 + rr(i + 82) * 1.3);
+      const px = x + Math.cos(ang) * spd * k;
+      const py = y + Math.sin(ang) * spd * k + k * k * R * 0.3 - k * R * 0.3;
+      ctx.beginPath(); ctx.arc(px, py, (0.4 + rr(i + 84) * 0.7) * a, 0, Math.PI * 2);
+      ctx.fillStyle = hexA(col, a * 0.3);
+      ctx.fill();
+    }
+    // === 3. 爆裂冲击环 ===
+    ctx.beginPath(); ctx.arc(x, y, (1 - a) * R * 1.5, 0, Math.PI * 2);
+    ctx.strokeStyle = hexA(col, a * 0.5);
+    ctx.lineWidth = 2 + (1 - a) * 3;
+    ctx.stroke();
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  });
+
   window.ZS = window.ZS || {};
   window.ZS.Systems = window.ZS.Systems || {};
   window.ZS.Systems.FX = FX;
