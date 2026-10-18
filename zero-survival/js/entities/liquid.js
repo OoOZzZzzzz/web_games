@@ -14,13 +14,13 @@
   }
 
   class Liquid {
-    constructor(color, ihw, eq = 0.55) {
+    constructor(color, ihw, eq = 0.55, n = 160, radDiv = 21) {
       this.color = color;
       this.box = ihw;         // 内盒半宽（水区，正方）
       this.G = 460;           // 重力
+      this.radDiv = radDiv;   // 粒子半径除数（越大粒子越细）
       this.parts = [];
       // 初始化：底部 ~eq 高度内随机撒粒子（总量守恒，固定数量）
-      const n = 160;
       const topY = -this.box * (eq * 2 - 1);   // 液面 y（+下 -上）
       for (let i = 0; i < n; i++) {
         const px = (Math.random() * 2 - 1) * this.box * 0.92;
@@ -111,7 +111,7 @@
     // 绘制：粒子叠加成发光水体 + 顶部亮水面
     draw(ctx, x, y) {
       const b = this.box;
-      const rad = b / 21;   // 更细的粒子，接近水，无颗粒感
+      const rad = b / this.radDiv;   // 粒子半径（由怪物数据 radDiv 决定）
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
       // 先画一个底部"水体"衬底（让整体像一汪水）

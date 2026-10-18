@@ -324,17 +324,19 @@
       const a = e.appearance || {};
       const col = a.color || '#ef5350';
       const t = world.elapsed;
+      // 读取本怪物数据里的专属视觉配置（写在本怪物下面）
+      const V = (e.def && e.def.visual && e.def.visual.writhing) || {};
       const rx = r * 0.95, ry = r * 1.3;           // 半椭圆：沿短轴切（底窄、身高，不扁）
-      const waveAmp = r * 0.17;                    // 蠕动幅度（明显）
-      const waveFreq = 3 + (e.speed || 90) / 45;   // 蠕动快慢
+      const waveAmp = r * (V.amp || 0.17);         // 蠕动幅度（明显）
+      const waveFreq = (V.freqBase || 3) + (e.speed || 90) / (V.freqSpeed || 45);   // 蠕动快慢
       const phase = t * waveFreq;
       ctx.save();
       ctx.translate(x, y);
       // 身体：上半圆顶（不透明，纯色，同史莱姆）+ 锯齿状圆角齿底边（蠕动）
       ctx.beginPath();
       ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI, true);   // 上半圆顶（右→上→左）
-      const M = 8;                                      // 齿数
-      const toothH = r * 0.3;                           // 齿突出高度
+      const M = V.teeth || 8;                           // 齿数
+      const toothH = r * (V.toothH || 0.3);             // 齿突出高度
       for (let i = 0; i < M; i++) {
         const xl = -rx + (i / M) * (rx * 2);
         const xr = -rx + ((i + 1) / M) * (rx * 2);
@@ -366,12 +368,16 @@
       const shell = a.color || '#cfd8dc';
       const t = world.elapsed;
       const hw = r;
-      const wall = r * 0.3;
+      // 读取本怪物数据里的专属视觉配置（写在本怪物下面）
+      const V = (e.def && e.def.visual) || {};
+      const shellCfg = V.shell || {};
+      const liqCfg = V.liquid || {};
+      const wall = r * (shellCfg.wall || 0.3);   // 玻璃壁厚
       const ihw = hw - wall;
       const dt = Math.min(0.05, Math.max(0.001, t - (e._lastT || t)));
       e._lastT = t;
-      // 懒初始化两个独立对象（水 + 玻璃外壳）
-      if (!e.liquid) e.liquid = new window.ZS.Entities.Liquid(tint, ihw);
+      // 懒初始化两个独立对象（水 + 玻璃外壳），参数来自怪物数据
+      if (!e.liquid) e.liquid = new window.ZS.Entities.Liquid(tint, ihw, liqCfg.eq || 0.55, liqCfg.particles || 160, liqCfg.radDiv || 21);
       if (!e.shell) e.shell = new window.ZS.Entities.GlassShell(shell, hw, wall);
       const liquid = e.liquid;
       const shellObj = e.shell;

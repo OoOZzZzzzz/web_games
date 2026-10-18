@@ -12,6 +12,7 @@
   class Monster extends Entity {
     constructor(def, styleTheme) {
       super({ radius: def.radius });
+      this.def = def;                 // 完整定义（渲染读 visual 配置）
       this.type = def.type || null;
       this.tier = def.tier;
       this.shape = def.shape;

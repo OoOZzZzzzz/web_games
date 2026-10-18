@@ -24,6 +24,8 @@
       // 半椭圆身形 + 波浪腰线；眼睛用数据驱动的深色豆豆椭圆（同史莱姆做法）
       appearance: { color: '#ef5350', eyeColor: '#a63a3a', eyes: 'bean' },
       features: ['fast', 'zigzag'],
+      // 专属视觉：半椭圆身形 + 底边蠕动（行进波）
+      visual: { shape: 'half-ellipse', writhing: { amp: 0.17, freqBase: 3, freqSpeed: 45, teeth: 8, toothH: 0.3 } },
       desc: '红色小虫，移速快，血量低，喜欢围堵',
     },
     golem: {
@@ -31,6 +33,8 @@
       stats: { hp: 80, speed: 46, damage: 15, xp: 18 },
       appearance: { color: '#b0bec5', eyes: false },
       features: ['heavy'],
+      // 专属视觉：玻璃外壳（壁厚）+ 内部水/岩浆（FLIP 粒子）
+      visual: { shape: 'glass-bottle', shell: { wall: 0.3 }, liquid: { eq: 0.55, particles: 160, radDiv: 21 } },
       desc: '灰色方块怪，血厚，移动慢，高威胁',
     },
     elite: {
